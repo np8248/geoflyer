@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stereo Madness - Geometry Dash Remake v4</title>
+<title>Stereo Madness - Endless Mode</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#000;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;font-family:'Arial',sans-serif;position:relative}
@@ -12,6 +12,8 @@ canvas{display:block}
 #pbar-wrap{position:absolute;top:10px;width:280px;height:7px;background:rgba(0,0,0,0.5);border-radius:4px;overflow:hidden}
 #pbar{height:100%;width:0%;background:#0f0;border-radius:4px;transition:width 0.1s}
 #ptext{position:absolute;top:20px;color:#fff;font-size:13px;text-shadow:1px 1px 2px #000}
+#scoreTxt{position:absolute;top:10px;left:20px;color:#0f0;font-size:18px;font-weight:bold;text-shadow:0 0 8px #0f0;pointer-events:none}
+#highTxt{position:absolute;top:32px;left:20px;color:#ff0;font-size:12px;text-shadow:1px 1px 2px #000;pointer-events:none}
 #attempts{color:#ff0;font-size:13px;position:absolute;top:36px;text-shadow:1px 1px 2px #000}
 #pauseBtn{position:absolute;top:8px;right:12px;pointer-events:auto;cursor:pointer;color:#fff;font-size:22px;text-shadow:1px 1px 3px #000;opacity:0.7;user-select:none}
 #pauseBtn:hover{opacity:1}
@@ -47,8 +49,8 @@ canvas{display:block}
 <body>
 <canvas id="game"></canvas>
 <div id="ui">
-  <div id="pbar-wrap"><div id="pbar"></div></div>
-  <div id="ptext">0%</div>
+  <div id="scoreTxt">0m</div>
+  <div id="highTxt">Best: 0m</div>
   <div id="attempts"></div>
   <div id="godBtn" onclick="toggleGod()">GOD</div>
   <div id="pauseBtn" onclick="togglePause()">| |</div>
@@ -59,14 +61,16 @@ canvas{display:block}
     <div class="key" id="k-p">P</div>
     <div class="key" id="k-g">G</div>
     <div class="key" id="k-esc">ESC</div>
+    <div class="key" id="k-r">R</div>
+    <div class="key" id="k-h">H</div>
     <div class="key" id="k-mouse">MOUSE</div>
   </div>
 </div>
 <div class="scr" id="startS" onclick="onInput()">
   <h1>STEREO MADNESS</h1>
-  <h2>Geometry Dash Remake</h2>
+  <h2>Endless Mode</h2>
   <p>Click or press Space to play</p>
-  <p class="sub">Hold to fly up, release to fall &bull; P / Esc = Pause</p>
+  <p class="sub">Hold to fly up, release to fall &bull; Survive as long as you can! &bull; P / Esc = Pause</p>
 </div>
 <div class="scr" id="deathS" onclick="onInput()">
   <h2>YOU CRASHED!</h2>
@@ -95,7 +99,7 @@ canvas{display:block}
 
   <div class="ctrl-row">
     <label>Gravity (fall) <span id="v-shipGrav">0.4</span></label>
-    <input type="range" id="s-shipGrav" min="0.1" max="1.2" step="0.05" value="0.4">
+    <input type="range" id="s-shipGrav" min="0.1" max="1.2" step="0.05" value="0.3">
   </div>
 
   <div class="ctrl-row">
@@ -146,7 +150,7 @@ const JUMP = -11.8;
 let SPEED = 5.0;
 const GND = T * 11;
 let SHIP_UP = -0.5;
-let SHIP_GRAV = 0.4;
+let SHIP_GRAV = 0.3;
 let SHIP_MAX = 7;
 let PSIZ = T - 4;
 const G = Math.floor(GND / T);
@@ -170,32 +174,18 @@ bindSlider('s-speed', 'v-speed', v => { SPEED = v; });
 bindSlider('s-psiz', 'v-psiz', v => { PSIZ = v; });
 
 function resetDefaults() {
-  SHIP_UP = -0.5; SHIP_GRAV = 0.4; SHIP_MAX = 7; SPEED = 5.0; PSIZ = 36;
+  SHIP_UP = -0.5; SHIP_GRAV = 0.3; SHIP_MAX = 7; SPEED = 5.0; PSIZ = 36;
   document.getElementById('s-shipUp').value = -0.5; document.getElementById('v-shipUp').textContent = '-0.5';
-  document.getElementById('s-shipGrav').value = 0.4; document.getElementById('v-shipGrav').textContent = '0.4';
+  document.getElementById('s-shipGrav').value = 0.3; document.getElementById('v-shipGrav').textContent = '0.3';
   document.getElementById('s-shipMax').value = 7; document.getElementById('v-shipMax').textContent = '7';
   document.getElementById('s-speed').value = 5.0; document.getElementById('v-speed').textContent = '5';
   document.getElementById('s-psiz').value = 36; document.getElementById('v-psiz').textContent = '36';
 }
 
 // ================================================================
-// SPACING - adds breathing room between level sections
+// SPACING (not used in endless - kept for compat)
 // ================================================================
-function sx(x) {
-  let e = 0;
-  if (x >= 20) e += 4;
-  if (x >= 45) e += 5;
-  if (x >= 70) e += 5;
-  if (x >= 100) e += 6;
-  if (x >= 130) e += 5;
-  if (x >= 160) e += 6;
-  if (x >= 195) e += 5;
-  if (x >= 230) e += 6;
-  if (x >= 265) e += 5;
-  if (x >= 300) e += 6;
-  if (x >= 340) e += 5;
-  return x + e;
-}
+function sx(x) { return x; }
 
 // ================================================================
 // STATE
@@ -204,6 +194,7 @@ let state = 'start', camX = 0, att = 1, particles = [];
 let inputDown = false, inputTap = false, holdJump = false;
 let canRestart = false;
 let godMode = false;
+let showHitboxes = false;
 let P = { x: 120, y: GND/2 - PSIZ/2, vy: 0, rot: 0, onG: false, dead: false, ship: true };
 
 // ================================================================
@@ -220,6 +211,16 @@ function toggleGod() {
   const btn = document.getElementById('godBtn');
   btn.classList.toggle('on', godMode);
   btn.textContent = godMode ? 'GOD ON' : 'GOD';
+}
+
+function forceRestart() {
+  hide('deathS'); hide('winS'); hide('pauseS'); hide('startS');
+  att++;
+  startGame();
+}
+
+function toggleHitboxes() {
+  showHitboxes = !showHitboxes;
 }
 
 function togglePause() {
@@ -243,6 +244,8 @@ document.addEventListener('keydown', e => {
   if (e.code === 'Escape') { keyFlash('k-esc'); e.preventDefault(); togglePause(); return; }
   if (e.key === 'p' || e.key === 'P') { keyFlash('k-p'); e.preventDefault(); togglePause(); return; }
   if (e.key === 'g' || e.key === 'G') { keyFlash('k-g'); toggleGod(); return; }
+  if (e.key === 'r' || e.key === 'R') { keyFlash('k-r'); forceRestart(); return; }
+  if (e.key === 'h' || e.key === 'H') { keyFlash('k-h'); toggleHitboxes(); return; }
   if (e.code === 'Space') { keyOn('k-space'); e.preventDefault(); inputDown = true; holdJump = true; inputTap = true; onInput(); }
   if (e.code === 'ArrowUp') { keyOn('k-up'); e.preventDefault(); inputDown = true; holdJump = true; inputTap = true; onInput(); }
   if (e.key === 'w' || e.key === 'W') { keyOn('k-w'); e.preventDefault(); inputDown = true; holdJump = true; inputTap = true; onInput(); }
@@ -285,165 +288,266 @@ function pillar(tx, h) { const st = sx(tx); for (let i = 0; i < h; i++) addObj('
 function decoPlat(tx, ty, w) { const st = sx(tx); for (let i = 0; i < w; i++) addObj('D', st + i, ty); }
 
 // ================================================================
-// LEVEL LAYOUT - ALL SHIP MODE
+// PROCEDURAL LEVEL GENERATOR - Endless Mode
 // ================================================================
+let genX = 20; // next tile x to generate at
+let highScore = 0;
+try { highScore = parseInt(localStorage.getItem('endless-high') || '0'); } catch(e) {}
 
-// --- Section 1: Intro / Blue zone - easy warm up ---
-// gentle floor spikes
-spike(15); spike(16); spike(17);
-smiley(18, G-4);
+// Difficulty ramps with distance: 0 = easy, 1 = hardest
+function diff() { return Math.min(1, camX / 40000); }
 
-// ceiling spikes
-cspike(25); cspike(26); cspike(27);
+// Seeded-ish random per generation call
+function rng() { return Math.random(); }
+function rngInt(min, max) { return min + Math.floor(rng() * (max - min + 1)); }
+function pick(arr) { return arr[Math.floor(rng() * arr.length)]; }
+// Gap after each obstacle - shrinks as difficulty increases
+function gap() { const d = diff(); return rngInt(Math.max(2, Math.floor(4 - d * 2)), Math.max(3, Math.floor(6 - d * 3))); }
 
-// floor + ceiling combo (fly through the middle)
-spike(35); spike(36); spike(37);
-cspike(35); cspike(36); cspike(37);
-smiley(38, 5);
+// Obstacle pattern generators - each returns how many tiles it used
+const patterns = [
+  // Floor spikes
+  function floorSpikes() {
+    const n = rngInt(2, 3 + Math.floor(diff() * 4));
+    for (let i = 0; i < n; i++) addObj('S', genX + i, G - 1);
+    if (rng() < 0.4) for (let i = 0; i < n; i++) addObj('FR', genX + i, G - 1);
+    return n + gap();
+  },
+  // Ceiling spikes
+  function ceilSpikes() {
+    const n = rngInt(2, 3 + Math.floor(diff() * 4));
+    for (let i = 0; i < n; i++) addObj('CS', genX + i, 0);
+    return n + gap();
+  },
+  // Spike sandwich (floor + ceiling)
+  function spikeSandwich() {
+    const n = rngInt(2, 3 + Math.floor(diff() * 4));
+    for (let i = 0; i < n; i++) {
+      addObj('S', genX + i, G - 1);
+      addObj('CS', genX + i, 0);
+    }
+    return n + gap();
+  },
+  // Wall from floor
+  function floorWall() {
+    const h = rngInt(2, 3 + Math.floor(diff() * 3));
+    const w = 2;
+    for (let i = 0; i < w; i++)
+      for (let j = 0; j < h; j++)
+        addObj('B', genX + i, G - 1 - j);
+    if (rng() < 0.5) addObj('SM', genX + 1, G - 1 - h - 1);
+    return w + gap();
+  },
+  // Wall from ceiling
+  function ceilWall() {
+    const h = rngInt(2, 3 + Math.floor(diff() * 3));
+    const w = 2;
+    for (let i = 0; i < w; i++)
+      for (let j = 0; j < h; j++)
+        addObj('B', genX + i, j);
+    return w + gap();
+  },
+  // Corridor (walls top + bottom, fly through middle - always leave at least 3 rows open)
+  function corridor() {
+    const w = rngInt(3, 4);
+    const maxH = Math.floor((G - 3) / 2); // ensure at least 3 rows gap in middle
+    const h = rngInt(2, Math.min(maxH, 2 + Math.floor(diff() * 2)));
+    for (let i = 0; i < w; i++) {
+      for (let j = 0; j < h; j++) {
+        addObj('B', genX + i, j);
+        addObj('B', genX + i, G - 1 - j);
+      }
+    }
+    if (rng() < 0.5) addObj('SM', genX + Math.floor(w/2), h + 1);
+    return w + gap();
+  },
+  // Alternating walls (weave up and down)
+  function altWalls() {
+    const h = rngInt(3, 4 + Math.floor(diff() * 2));
+    // floor wall
+    for (let i = 0; i < 2; i++)
+      for (let j = 0; j < h; j++)
+        addObj('B', genX + i, G - 1 - j);
+    // ceiling wall after gap
+    const gap = rngInt(4, 6);
+    for (let i = 0; i < 2; i++)
+      for (let j = 0; j < h; j++)
+        addObj('B', genX + gap + i, j);
+    if (rng() < 0.4) addObj('SM', genX + 1, G - 1 - h - 1);
+    return gap + 2 + gap();
+  },
+  // Hanging spikes
+  function hangingSpikes() {
+    const n = rngInt(2, 3 + Math.floor(diff() * 2));
+    const spacing = rngInt(2, 3);
+    for (let i = 0; i < n; i++) {
+      addObj('HG', genX + i * spacing, 0);
+    }
+    // add some floor spikes between
+    if (diff() > 0.3) {
+      for (let i = 0; i < n - 1; i++) {
+        addObj('S', genX + i * spacing + 1, G - 1);
+      }
+    }
+    for (let i = 0; i < n * spacing; i++) addObj('FR', genX + i, G - 1);
+    return n * spacing + rngInt(3, 5);
+  },
+  // Fire row (decoration + floor spikes)
+  function fireRow() {
+    const n = rngInt(4, 6 + Math.floor(diff() * 3));
+    for (let i = 0; i < n; i++) addObj('FR', genX + i, G - 1);
+    // add a couple spikes in the fire
+    const spikes = rngInt(1, Math.floor(n / 2));
+    for (let i = 0; i < spikes; i++) {
+      addObj('S', genX + rngInt(0, n - 1), G - 1);
+    }
+    return n + gap();
+  },
+  // Double alternating walls (harder)
+  function doubleAlt() {
+    if (diff() < 0.3) return 0; // skip if too early
+    const h = rngInt(3, 5);
+    const gap = rngInt(4, 5);
+    for (let rep = 0; rep < 2; rep++) {
+      const ox = rep * (gap + 2);
+      const fromFloor = rep % 2 === 0;
+      for (let i = 0; i < 2; i++)
+        for (let j = 0; j < h; j++)
+          addObj('B', genX + ox + i, fromFloor ? G - 1 - j : j);
+      addObj('SM', genX + ox + 1, fromFloor ? G - 1 - h - 1 : h + 1);
+    }
+    return 2 * (gap + 2) + gap();
+  },
+  // Floating mid-air blocks with spikes on top (can't just cruise the middle)
+  function floatingBlocks() {
+    const row = rngInt(3, G - 4); // random row in the middle
+    const w = rngInt(2, 3 + Math.floor(diff() * 2));
+    for (let i = 0; i < w; i++) {
+      addObj('B', genX + i, row);
+      addObj('S', genX + i, row - 1); // spike on top
+    }
+    if (rng() < 0.4) { // sometimes add ceiling spikes above to block going over
+      for (let i = 0; i < w; i++) addObj('CS', genX + i, row - 3);
+    }
+    return w + gap();
+  },
+  // Scattered mid-air blocks at different heights (maze-like, never same column)
+  function scatteredBlocks() {
+    const count = rngInt(2, 3 + Math.floor(diff() * 2));
+    let ox = 0;
+    let lastRow = -10;
+    for (let i = 0; i < count; i++) {
+      // Pick a row that's different from the last one (forces varied path)
+      let row;
+      do { row = rngInt(3, G - 4); } while (Math.abs(row - lastRow) < 3);
+      lastRow = row;
+      addObj('B', genX + ox, row);
+      addObj('B', genX + ox + 1, row);
+      addObj('S', genX + ox, row - 1);
+      addObj('S', genX + ox + 1, row - 1);
+      if (rng() < 0.3 + diff() * 0.3) {
+        addObj('CS', genX + ox, row + 1);
+        addObj('CS', genX + ox + 1, row + 1);
+      }
+      ox += rngInt(4, 6);
+    }
+    return ox + gap();
+  },
+  // Mid-height corridor (blocks in the MIDDLE, forcing you to edges)
+  function midCorridor() {
+    const w = rngInt(3, 5 + Math.floor(diff() * 2));
+    const midRow = rngInt(4, G - 5); // leave at least 3 rows above and below
+    for (let i = 0; i < w; i++) {
+      addObj('B', genX + i, midRow);
+      addObj('B', genX + i, midRow + 1);
+      if (midRow > 1) addObj('S', genX + i, midRow - 1); // spikes on top
+      if (midRow + 2 < G - 1) addObj('CS', genX + i, midRow + 2); // spikes below
+    }
+    return w + gap();
+  },
+  // Fire column (fire on floor + fire-topped blocks in mid-air)
+  function fireColumn() {
+    const n = rngInt(3, 5 + Math.floor(diff() * 3));
+    for (let i = 0; i < n; i++) {
+      addObj('FR', genX + i, G - 1); // fire on floor
+    }
+    // floating block with fire on top in the middle
+    const row = rngInt(3, G - 4);
+    const bw = rngInt(1, 2);
+    for (let i = 0; i < bw; i++) {
+      addObj('B', genX + Math.floor(n/2) + i, row);
+      addObj('FR', genX + Math.floor(n/2) + i, row - 1);
+    }
+    return n + gap();
+  },
+  // Zigzag blocks (alternating high/low floating blocks with spikes)
+  function zigzagBlocks() {
+    if (diff() < 0.15) return 0;
+    const count = rngInt(3, 4 + Math.floor(diff() * 2));
+    let ox = 0;
+    for (let i = 0; i < count; i++) {
+      const high = i % 2 === 0;
+      const row = high ? rngInt(2, 4) : rngInt(G - 5, G - 3);
+      addObj('B', genX + ox, row);
+      addObj('B', genX + ox + 1, row);
+      addObj('S', genX + ox, row - 1);
+      addObj('S', genX + ox + 1, row - 1);
+      ox += rngInt(3, 4);
+    }
+    return ox + gap();
+  }
+];
 
-// small wall from floor
-plat(45, G-1, 2); plat(45, G-2, 2); plat(45, G-3, 2);
-smiley(46, G-5);
+function generateAhead() {
+  const aheadTile = Math.floor((camX + W + T * 10) / T);
+  let safety = 0;
+  while (genX < aheadTile && safety < 50) {
+    safety++;
+    const pat = pick(patterns);
+    const used = pat();
+    if (used > 0) genX += used;
+    else genX += Math.max(3, gap());
+  }
+}
 
-// small wall from ceiling
-plat(53, 0, 2); plat(53, 1, 2); plat(53, 2, 2);
-
-// floor spikes then ceiling spikes (weave pattern)
-spike(62); spike(63); spike(64); spike(65);
-cspike(70); cspike(71); cspike(72); cspike(73);
-fire(62); fire(63); fire(64); fire(65);
-
-// --- Section 2: Pink zone - corridors ---
-// narrow corridor: floor + ceiling walls
-plat(82, G-1, 2); plat(82, G-2, 2);
-plat(82, 0, 2); plat(82, 1, 2);
-smiley(83, 5);
-
-// spike sandwich
-spike(90); spike(91); spike(92); spike(93); spike(94);
-cspike(90); cspike(91); cspike(92); cspike(93); cspike(94);
-
-// corridor with gap to fly through
-plat(102, 0, 3); plat(102, 1, 3); plat(102, 2, 3);
-plat(102, G-1, 3); plat(102, G-2, 3); plat(102, G-3, 3);
-smiley(104, 5);
-
-// alternating walls (up-down weave)
-plat(112, G-1, 2); plat(112, G-2, 2); plat(112, G-3, 2); plat(112, G-4, 2);
-plat(118, 0, 2); plat(118, 1, 2); plat(118, 2, 2); plat(118, 3, 2);
-plat(124, G-1, 2); plat(124, G-2, 2); plat(124, G-3, 2); plat(124, G-4, 2);
-smiley(113, G-6); smiley(119, 5);
-
-// --- Section 3: Purple zone - spike runs ---
-// long floor spike run
-spike(135); spike(136); spike(137); spike(138); spike(139); spike(140); spike(141);
-fire(135); fire(136); fire(137); fire(138); fire(139); fire(140); fire(141);
-
-// long ceiling spike run
-cspike(150); cspike(151); cspike(152); cspike(153); cspike(154); cspike(155); cspike(156);
-
-// double spike sandwich (tight!)
-spike(165); spike(166); spike(167); spike(168); spike(169);
-cspike(165); cspike(166); cspike(167); cspike(168); cspike(169);
-smiley(170, 5);
-
-// wall + spike combos
-plat(178, G-1, 2); plat(178, G-2, 2); plat(178, G-3, 2);
-cspike(180); cspike(181); cspike(182);
-plat(185, 0, 2); plat(185, 1, 2); plat(185, 2, 2);
-spike(187); spike(188); spike(189);
-
-// --- Section 4: Red zone - fire + hanging spikes ---
-fire(200); fire(201); fire(202); fire(203); fire(204); fire(205);
-hangSpike(200, 0); hangSpike(203, 0);
-spike(207); spike(208);
-
-// corridor walls with fire
-plat(215, G-1, 3); plat(215, G-2, 3);
-plat(215, 0, 3); plat(215, 1, 3);
-fire(215); fire(216); fire(217);
-smiley(217, 5);
-
-// hanging spikes gauntlet
-hangSpike(225, 0); hangSpike(228, 0); hangSpike(231, 0); hangSpike(234, 0);
-spike(227); spike(230); spike(233);
-fire(225); fire(226); fire(227); fire(228); fire(229); fire(230);
-fire(231); fire(232); fire(233); fire(234);
-
-// big walls alternating with spikes
-plat(243, G-1, 2); plat(243, G-2, 2); plat(243, G-3, 2); plat(243, G-4, 2); plat(243, G-5, 2);
-cspike(246); cspike(247); cspike(248);
-plat(251, 0, 2); plat(251, 1, 2); plat(251, 2, 2); plat(251, 3, 2); plat(251, 4, 2);
-spike(254); spike(255); spike(256);
-smiley(252, 6); smiley(244, G-7);
-
-// --- Section 5: Magenta zone - finale (hardest) ---
-// dense spike sandwich
-spike(270); spike(271); spike(272); spike(273); spike(274); spike(275); spike(276);
-cspike(270); cspike(271); cspike(272); cspike(273); cspike(274); cspike(275); cspike(276);
-
-// corridor then open
-plat(285, 0, 4); plat(285, 1, 4); plat(285, 2, 4);
-plat(285, G-1, 4); plat(285, G-2, 4); plat(285, G-3, 4);
-smiley(287, 5);
-
-// alternating walls rapid fire
-plat(296, G-1, 2); plat(296, G-2, 2); plat(296, G-3, 2); plat(296, G-4, 2); plat(296, G-5, 2);
-plat(301, 0, 2); plat(301, 1, 2); plat(301, 2, 2); plat(301, 3, 2); plat(301, 4, 2);
-plat(306, G-1, 2); plat(306, G-2, 2); plat(306, G-3, 2); plat(306, G-4, 2); plat(306, G-5, 2);
-plat(311, 0, 2); plat(311, 1, 2); plat(311, 2, 2); plat(311, 3, 2); plat(311, 4, 2);
-smiley(297, G-7); smiley(302, 6); smiley(307, G-7); smiley(312, 6);
-
-// final spike gauntlet
-spike(322); spike(323); spike(324); spike(325); spike(326); spike(327); spike(328);
-cspike(322); cspike(323); cspike(324); cspike(325); cspike(326); cspike(327); cspike(328);
-fire(322); fire(323); fire(324); fire(325); fire(326); fire(327); fire(328);
-
-// final walls
-plat(336, 0, 3); plat(336, 1, 3); plat(336, 2, 3); plat(336, 3, 3);
-plat(336, G-1, 3); plat(336, G-2, 3); plat(336, G-3, 3); plat(336, G-4, 3);
-smiley(338, 5); smiley(338, G-6);
-
-// last spike run
-spike(348); spike(349); spike(350); spike(351); spike(352);
-cspike(348); cspike(349); cspike(350); cspike(351); cspike(352);
-
-// victory runway
-plat(360, G-1, 12);
-const LEVEL_END = sx(375) * T;
+function cleanupBehind() {
+  const behindTile = Math.floor((camX - T * 5) / T);
+  // Remove objects that are far behind the camera
+  while (L.length > 0 && L[0].x < behindTile) L.shift();
+}
 
 // ================================================================
-// COLOR ZONES - boundaries use sx() scaled positions
+// COLOR ZONES - cycle through colors every 3000px
 // ================================================================
-const zones = [
-  { s:0,       e:sx(78)*T, bg:'#0a0e3a', bgR:'#101878', bgB:'#1a2494', gnd:'#04061a', gl:'#4488ff',
+const zoneList = [
+  { bg:'#0a0e3a', bgR:'#101878', bgB:'#1a2494', gnd:'#04061a', gl:'#4488ff',
     sk:'#1a1a2e', skIn:'#2a2a4e', skB:'#111128', nm:'blue' },
-  { s:sx(78)*T, e:sx(132)*T, bg:'#7a0040', bgR:'#a00058', bgB:'#c00078', gnd:'#1a0008', gl:'#ff4090',
+  { bg:'#7a0040', bgR:'#a00058', bgB:'#c00078', gnd:'#1a0008', gl:'#ff4090',
     sk:'#fff', skIn:'#ddd', skB:'#ccc', nm:'pink' },
-  { s:sx(132)*T, e:sx(195)*T, bg:'#2a0060', bgR:'#3c0090', bgB:'#5000b0', gnd:'#0a0018', gl:'#aa66ff',
+  { bg:'#2a0060', bgR:'#3c0090', bgB:'#5000b0', gnd:'#0a0018', gl:'#aa66ff',
     sk:'#fff', skIn:'#ddd', skB:'#ccc', nm:'purple' },
-  { s:sx(195)*T, e:sx(265)*T, bg:'#3a0000', bgR:'#580000', bgB:'#780000', gnd:'#0a0000', gl:'#ff2020',
+  { bg:'#3a0000', bgR:'#580000', bgB:'#780000', gnd:'#0a0000', gl:'#ff2020',
     sk:'#fff', skIn:'#ddd', skB:'#ccc', nm:'red' },
-  { s:sx(265)*T, e:99999, bg:'#3a0040', bgR:'#580068', bgB:'#780090', gnd:'#140018', gl:'#e040fb',
+  { bg:'#3a0040', bgR:'#580068', bgB:'#780090', gnd:'#140018', gl:'#e040fb',
     sk:'#fff', skIn:'#ddd', skB:'#ccc', nm:'magenta' }
 ];
+const ZONE_LEN = 3000;
 function getZone(px) {
-  for (const z of zones) if (px >= z.s && px < z.e) return z;
-  return zones[zones.length - 1];
+  const idx = Math.floor(px / ZONE_LEN) % zoneList.length;
+  return zoneList[idx];
 }
 
 // ================================================================
 // GAME LOGIC
 // ================================================================
-let coinsGot = 0, totalCoins = 0;
-L.forEach(o => { if (o.t === 'CN') totalCoins++; });
-
 function startGame() {
-  state = 'playing'; camX = 0; coinsGot = 0; canRestart = false;
+  state = 'playing'; camX = 0; canRestart = false;
   P = { x: 120, y: GND/2 - PSIZ/2, vy: 0, rot: 0, onG: false, dead: false, ship: true };
   particles = []; inputTap = false;
-  L.forEach(o => { if (o.t === 'CN') o.collected = false; });
+  L.length = 0; genX = 20; // reset level
+  generateAhead(); // pre-fill screen
   document.getElementById('attempts').textContent = 'Attempt ' + att;
+  document.getElementById('highTxt').textContent = 'Best: ' + highScore + 'm';
 }
 
 function kill() {
@@ -460,7 +564,9 @@ function kill() {
   }
   // Show death screen after 600ms, allow restart after another 600ms
   setTimeout(() => {
-    document.getElementById('deathP').textContent = 'Progress: ' + Math.floor((camX/LEVEL_END)*100) + '%';
+    const dist = Math.floor(camX / T);
+    if (dist > highScore) { highScore = dist; localStorage.setItem('endless-high', highScore); }
+    document.getElementById('deathP').textContent = 'Distance: ' + dist + 'm  |  Best: ' + highScore + 'm';
     show('deathS');
     setTimeout(() => { canRestart = true; }, 600);
   }, 600);
@@ -515,7 +621,8 @@ function update() {
         const oT = (p.y+p.h)-bR.y, oB = (bR.y+bR.h)-p.y;
         const mn = Math.min(oL, oR, oT, oB);
         if (P.ship) {
-          if (mn === oT && P.vy >= 0) { P.y = sy - PSIZ; P.vy = 0; }
+          if (mn === oL || mn === oR) { kill(); return; }
+          else if (mn === oT && P.vy >= 0) { P.y = sy - PSIZ; P.vy = 0; }
           else if (mn === oB && P.vy <= 0) { P.y = sy + T; P.vy = 0; }
           else { kill(); return; }
         } else {
@@ -538,6 +645,11 @@ function update() {
       case 'HG': {
         const sR = { x: osx+6, y: sy+T, w: T-12, h: T };
         if (ov(pr(), sR)) { kill(); return; }
+        break;
+      }
+      case 'FR': {
+        const fR = { x: osx+6, y: sy + T - 18, w: T-12, h: 18 };
+        if (ov(pr(), fR)) { kill(); return; }
         break;
       }
       case 'P': {
@@ -574,22 +686,24 @@ function update() {
     else P.rot = Math.round(P.rot / 90) * 90;
   }
 
-  if (P.y > H + 50) { kill(); return; }
-  if (camX >= LEVEL_END) win();
+  if (P.y > H + 50 || P.y < -100) { kill(); return; }
 
-  const pct = Math.min(100, Math.floor((camX/LEVEL_END)*100));
-  document.getElementById('pbar').style.width = pct + '%';
-  document.getElementById('ptext').textContent = pct + '%';
+  // Endless: generate ahead and cleanup behind
+  generateAhead();
+  cleanupBehind();
+
+  const dist = Math.floor(camX / T);
+  document.getElementById('scoreTxt').textContent = dist + 'm';
 }
 
 // ================================================================
 // RENDERING
 // ================================================================
+// Background rects - wrapping pattern that tiles endlessly
+const BG_TILE_W = 2600; // background repeats every this many pixels (parallax space)
 const bgRects = [];
 (function() {
-  const px = 0.15;
-  const totalW = W + LEVEL_END * px + W;
-  const cols = Math.ceil(totalW / 260) + 2;
+  const cols = Math.ceil(BG_TILE_W / 260) + 2;
   for (let c = 0; c < cols; c++) {
     for (let r = 0; r < 3; r++) {
       bgRects.push({
@@ -613,12 +727,14 @@ function drawBG() {
   X.fillStyle = z.bg;
   X.fillRect(0, 0, W, GND);
 
-  const pOff = camX * 0.15;
+  const pOff = (camX * 0.15) % BG_TILE_W;
   X.fillStyle = z.bgR;
   X.strokeStyle = z.bgB;
   X.lineWidth = 2;
   for (const r of bgRects) {
-    const rx = r.x - pOff;
+    let rx = r.x - pOff;
+    if (rx + r.w < -BG_TILE_W) rx += BG_TILE_W;
+    if (rx > W + 50) rx -= BG_TILE_W;
     if (rx + r.w < -50 || rx > W + 50) continue;
     X.fillRect(rx, r.y, r.w, r.h);
     X.strokeRect(rx, r.y, r.w, r.h);
@@ -789,6 +905,33 @@ function drawObjects() {
       case 'SM': drawSmiley(ox, oy); break;
       case 'CN': drawCoin(ox, oy, o.collected); break;
     }
+    // Hitbox overlay
+    if (showHitboxes) {
+      let hb = null;
+      switch (o.t) {
+        case 'B':  hb = { x: ox, y: oy, w: T, h: T }; break;
+        case 'S':  hb = { x: ox+8, y: oy+10, w: T-16, h: T-10 }; break;
+        case 'CS': hb = { x: ox+8, y: oy, w: T-16, h: T-10 }; break;
+        case 'HG': hb = { x: ox+6, y: oy+T, w: T-12, h: T }; break;
+        case 'FR': hb = { x: ox+6, y: oy+T-18, w: T-12, h: 18 }; break;
+      }
+      if (hb) {
+        X.strokeStyle = '#f00';
+        X.lineWidth = 1.5;
+        X.strokeRect(hb.x, hb.y, hb.w, hb.h);
+        X.fillStyle = 'rgba(255,0,0,0.15)';
+        X.fillRect(hb.x, hb.y, hb.w, hb.h);
+      }
+    }
+  }
+  // Player hitbox
+  if (showHitboxes && !P.dead) {
+    const p = { x: P.x+2, y: P.y+2, w: PSIZ-4, h: PSIZ-4 };
+    X.strokeStyle = '#0f0';
+    X.lineWidth = 1.5;
+    X.strokeRect(p.x, p.y, p.w, p.h);
+    X.fillStyle = 'rgba(0,255,0,0.15)';
+    X.fillRect(p.x, p.y, p.w, p.h);
   }
 }
 
@@ -841,11 +984,15 @@ function drawPlayer() {
 // MAIN LOOP
 // ================================================================
 function loop() {
-  X.clearRect(0, 0, W, H);
-  drawBG();
-  drawObjects();
-  update();
-  drawPlayer();
+  try {
+    X.clearRect(0, 0, W, H);
+    drawBG();
+    drawObjects();
+    update();
+    drawPlayer();
+  } catch(e) {
+    console.error('Game error:', e);
+  }
   requestAnimationFrame(loop);
 }
 loop();
