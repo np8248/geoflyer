@@ -312,6 +312,7 @@ let genX = 20; // next tile x to generate at
 let gndSpikeX = 0; // next tile x for ground spike generation
 let ceilGenX = 0; // next tile x for ceiling block generation
 let ceilSpikeX = 0; // next tile x for ceiling spike generation
+let ceilBumpX = 0; // next tile x for ceiling bump generation
 let highScore = 0;
 try { highScore = parseInt(localStorage.getItem('endless-high') || '0'); } catch(e) {}
 
@@ -408,10 +409,19 @@ const patterns = [
   function pyramidFloor() {
     const h = rngInt(2, 4 + Math.floor(diff()));
     if (h >= G - 3) return 0;
-    const cx = genX + h; // center x (leave room for base)
+    const cx = genX + h;
     const baseW = buildPyramid(cx, h);
-    // spikes on the top block
-    spikeRowAbove(cx, G - h - 1, 1);
+    // spikes along all exposed step edges
+    for (let row = 0; row < h; row++) {
+      const spikeY = G - h + row - 1;
+      if (spikeY < 0) continue;
+      if (row === 0) {
+        addObj(rng() < 0.5 ? 'S' : 'SS', cx, spikeY);
+      } else {
+        addObj(rng() < 0.5 ? 'S' : 'SS', cx - row, spikeY);
+        addObj(rng() < 0.5 ? 'S' : 'SS', cx + row, spikeY);
+      }
+    }
     return baseW + gap();
   },
 
@@ -421,8 +431,16 @@ const patterns = [
     if (h >= G - 3) return 0;
     const cx = genX + h;
     const baseW = buildInvertPyramid(cx, h);
-    // spikes on the bottom tip
-    spikeRowBelow(cx, h, 1);
+    // spikes along all exposed step edges (inverted)
+    for (let row = 0; row < h; row++) {
+      const spikeY = h - row;
+      if (row === 0) {
+        addObj(rng() < 0.5 ? 'CS' : 'SCS', cx, spikeY);
+      } else {
+        addObj(rng() < 0.5 ? 'CS' : 'SCS', cx - row, spikeY);
+        addObj(rng() < 0.5 ? 'CS' : 'SCS', cx + row, spikeY);
+      }
+    }
     return baseW + gap();
   },
 
@@ -484,10 +502,10 @@ const patterns = [
   // --- ENCLOSED TUNNEL: floor + ceiling corridor ---
   function enclosedTunnel() {
     const w = rngInt(6, 12);
-    const floorH = rngInt(1, 2);
-    const ceilH = rngInt(1, 2);
+    const floorH = rngInt(2, 3);
+    const ceilH = rngInt(2, 3);
     const openRows = G - floorH - ceilH;
-    if (openRows < 5) return 0;
+    if (openRows < 4) return 0;
     blockRect(genX, 0, w, ceilH);
     blockRect(genX, G - floorH, w, floorH);
     smallSpikeRowBelow(genX, ceilH, w);
@@ -498,8 +516,8 @@ const patterns = [
   // --- TUNNEL WITH PILLAR: corridor with a stepped pillar inside ---
   function tunnelWithPillar() {
     const w = rngInt(10, 14);
-    const floorH = 2;
-    const ceilH = 2;
+    const floorH = rngInt(2, 3);
+    const ceilH = rngInt(2, 3);
     const openRows = G - floorH - ceilH;
     if (openRows < 6) return 0;
     blockRect(genX, 0, w, ceilH);
@@ -641,8 +659,8 @@ const patterns = [
   // --- SHELF ROOM: corridor with a shelf creating upper/lower paths ---
   function shelfRoom() {
     const w = rngInt(8, 12);
-    const floorH = 1;
-    const ceilH = 1;
+    const floorH = rngInt(2, 3);
+    const ceilH = rngInt(2, 3);
     const openRows = G - floorH - ceilH;
     if (openRows < 6) return 0;
     blockRect(genX, 0, w, ceilH);
@@ -684,8 +702,8 @@ const patterns = [
   // --- OVERHANG: ceiling block with floor base, stepped edges ---
   function overhang() {
     const w = rngInt(5, 8);
-    const floorH = rngInt(1, 2);
-    const ceilH = rngInt(1, 2);
+    const floorH = rngInt(2, 3);
+    const ceilH = rngInt(2, 3);
     const openRows = G - floorH - ceilH;
     if (openRows < 5) return 0;
     blockRect(genX, G - floorH, w, floorH);
@@ -703,8 +721,8 @@ const patterns = [
     if (diff() < 0.1) return 0;
     const roomW = rngInt(8, 12);
     const wallW = 2;
-    const floorH = 1;
-    const ceilH = 1;
+    const floorH = rngInt(2, 3);
+    const ceilH = rngInt(2, 3);
     blockRect(genX, 0, roomW, ceilH);
     blockRect(genX, G - floorH, roomW, floorH);
     const entryOpen = rngInt(ceilH + 1, G - floorH - 4);
@@ -718,6 +736,36 @@ const patterns = [
       for (let i = 0; i < wallW; i++) addObj('B', genX + roomW - wallW + i, j);
     }
     return roomW + gap();
+  },
+
+  // --- TIGHT CORRIDOR: long enclosed section with bumps ---
+  function tightCorridor() {
+    const w = rngInt(10, 16);
+    const ceilH = rngInt(3, 4);
+    const floorH = rngInt(2, 3);
+    const openRows = G - ceilH - floorH;
+    if (openRows < 4) return 0;
+    blockRect(genX, 0, w, ceilH);
+    blockRect(genX, G - floorH, w, floorH);
+    // Add a bump from ceiling or floor midway
+    const bumpX = genX + rngInt(3, w - 4);
+    const bumpW = rngInt(2, 3);
+    if (rng() < 0.5) {
+      const bh = rngInt(1, 2);
+      if (ceilH + bh + 3 < G - floorH) {
+        blockRect(bumpX, ceilH, bumpW, bh);
+        spikeRowBelow(bumpX, ceilH + bh, bumpW);
+      }
+    } else {
+      const bh = rngInt(1, 2);
+      if (floorH + bh + 3 < G - ceilH) {
+        blockRect(bumpX, G - floorH - bh, bumpW, bh);
+        spikeRowAbove(bumpX, G - floorH - bh - 1, bumpW);
+      }
+    }
+    smallSpikeRowBelow(genX, ceilH, w);
+    smallSpikeRowAbove(genX, G - floorH - 1, w);
+    return w + gap();
   },
 
   // --- BIG STEPPED MASS: large structure with staircase edge, like GD screenshot ---
@@ -756,6 +804,8 @@ const patterns = [
     return baseW + gap();
   }
 ];
+// Boost tunnel-type patterns for enclosed feel (indices: 4=gate, 6=enclosedTunnel, 7=tunnelWithPillar, 10=wallWithWindow, 13=narrowingCorridor, 18=enclosedRoom, 20=tightCorridor)
+[4, 6, 7, 10, 13, 18, 20].forEach(i => { if (patterns[i]) patterns.push(patterns[i]); });
 
 function generateAhead() {
   const aheadTile = Math.floor((camX + W + T * 10) / T);
@@ -767,16 +817,30 @@ function generateAhead() {
     if (used > 0) genX += used;
     else genX += Math.max(3, gap());
   }
-  // Generate ceiling blocks + scattered ceiling spikes
+  // Tunnel ceiling: 2 blocks thick (rows 0-1) + spikes at row 2
   while (ceilGenX < aheadTile) {
     addObj('B', ceilGenX, 0);
+    addObj('B', ceilGenX, 1);
     ceilGenX++;
   }
   while (ceilSpikeX < aheadTile) {
-    if (rng() < 0.35) {
-      addObj(rng() < 0.5 ? 'CS' : 'SCS', ceilSpikeX, 1);
+    if (rng() < 0.4) {
+      addObj(rng() < 0.5 ? 'CS' : 'SCS', ceilSpikeX, 2);
     }
     ceilSpikeX++;
+  }
+  // Ceiling bumps: scattered blocks at row 2 (~20%) for visual texture
+  while (ceilBumpX < aheadTile) {
+    if (rng() < 0.2) {
+      const bw = rngInt(1, 3);
+      for (let i = 0; i < bw; i++) addObj('B', ceilBumpX + i, 2);
+      if (rng() < 0.5) {
+        // occasionally extend bump down with a deco block for depth
+        addObj('D', ceilBumpX + Math.floor(bw / 2), 3);
+      }
+      ceilBumpX += bw;
+    }
+    ceilBumpX++;
   }
   // Scatter ground spikes — real collision objects at row G-1
   while (gndSpikeX < aheadTile) {
@@ -810,7 +874,7 @@ const zoneList = [
   { bg:'#3a0040', bgR:'#580068', bgB:'#780090', gnd:'#140018', gl:'#e040fb',
     sk:'#fff', skIn:'#ddd', skB:'#ccc', nm:'magenta' }
 ];
-const ZONE_LEN = 3000;
+const ZONE_LEN = 1200;
 function getZone(px) {
   const idx = Math.floor(px / ZONE_LEN) % zoneList.length;
   return zoneList[idx];
@@ -823,7 +887,7 @@ function startGame() {
   state = 'playing'; camX = 0; canRestart = false;
   P = { x: 120, y: GND/2 - PSIZ/2, vy: 0, rot: 0, onG: false, dead: false, ship: true };
   particles = []; inputTap = false;
-  L.length = 0; blockSet.clear(); genX = 20; gndSpikeX = 0; ceilGenX = 0; ceilSpikeX = 0; // reset level
+  L.length = 0; blockSet.clear(); genX = 20; gndSpikeX = 0; ceilGenX = 0; ceilSpikeX = 0; ceilBumpX = 0; // reset level
   generateAhead(); // pre-fill screen
   document.getElementById('attempts').textContent = 'Attempt ' + att;
   document.getElementById('highTxt').textContent = 'Best: ' + highScore + 'm';
@@ -871,7 +935,6 @@ function update() {
     if (inputDown) P.vy += SHIP_UP; else P.vy += SHIP_GRAV;
     P.vy = Math.max(-SHIP_MAX, Math.min(SHIP_MAX, P.vy));
     P.y += P.vy;
-    if (P.y < 0) { P.y = 0; P.vy = 0; }
     if (P.y + PSIZ > GND) { P.y = GND - PSIZ; P.vy = 0; }
     P.rot = P.vy * 2;
   } else {
@@ -900,9 +963,15 @@ function update() {
         const oT = (p.y+p.h)-bR.y, oB = (bR.y+bR.h)-p.y;
         const mn = Math.min(oL, oR, oT, oB);
         if (P.ship) {
-          if (mn === oL || mn === oR) { kill(); return; }
-          else if (mn === oT && P.vy >= 0) { P.y = sy - PSIZ; P.vy = 0; }
+          // Prioritize vertical resolution to allow sliding over block edges
+          if (mn === oT && P.vy >= 0) { P.y = sy - PSIZ; P.vy = 0; }
           else if (mn === oB && P.vy <= 0) { P.y = sy + T; P.vy = 0; }
+          else if (mn === oL || mn === oR) {
+            // Edge clipping — resolve vertically if overlap is small
+            if (oT < PSIZ * 0.5) { P.y = sy - PSIZ; P.vy = Math.min(P.vy, 0); }
+            else if (oB < PSIZ * 0.5) { P.y = sy + T; P.vy = Math.max(P.vy, 0); }
+            else { kill(); return; }
+          }
           else { kill(); return; }
         } else {
           if (mn === oT && P.vy >= 0) { P.y = sy - PSIZ; P.vy = 0; P.onG = true; }
