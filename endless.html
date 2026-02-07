@@ -829,16 +829,12 @@ function generateAhead() {
     }
     ceilSpikeX++;
   }
-  // Ceiling bumps: scattered blocks at row 2 (~20%) for visual texture
+  // Ceiling bumps: occasional block clusters hanging down for texture
   while (ceilBumpX < aheadTile) {
-    if (rng() < 0.2) {
-      const bw = rngInt(1, 3);
+    if (rng() < 0.08) {
+      const bw = rngInt(1, 2);
       for (let i = 0; i < bw; i++) addObj('B', ceilBumpX + i, 2);
-      if (rng() < 0.5) {
-        // occasionally extend bump down with a deco block for depth
-        addObj('D', ceilBumpX + Math.floor(bw / 2), 3);
-      }
-      ceilBumpX += bw;
+      ceilBumpX += bw + rngInt(6, 12); // space out bumps
     }
     ceilBumpX++;
   }
