@@ -296,6 +296,7 @@ function decoPlat(tx, ty, w) { const st = sx(tx); for (let i = 0; i < w; i++) ad
 // PROCEDURAL LEVEL GENERATOR - Endless Mode
 // ================================================================
 let genX = 20; // next tile x to generate at
+let gndSpikeX = 0; // next tile x for ground spike generation
 let highScore = 0;
 try { highScore = parseInt(localStorage.getItem('endless-high') || '0'); } catch(e) {}
 
@@ -751,6 +752,13 @@ function generateAhead() {
     if (used > 0) genX += used;
     else genX += Math.max(3, gap());
   }
+  // Scatter ground spikes — real collision objects at row G-1
+  while (gndSpikeX < aheadTile) {
+    if (rng() < 0.35) {
+      addObj(rng() < 0.5 ? 'S' : 'SS', gndSpikeX, G - 1);
+    }
+    gndSpikeX++;
+  }
 }
 
 function cleanupBehind() {
@@ -787,7 +795,7 @@ function startGame() {
   state = 'playing'; camX = 0; canRestart = false;
   P = { x: 120, y: GND/2 - PSIZ/2, vy: 0, rot: 0, onG: false, dead: false, ship: true };
   particles = []; inputTap = false;
-  L.length = 0; genX = 20; // reset level
+  L.length = 0; genX = 20; gndSpikeX = 0; // reset level
   generateAhead(); // pre-fill screen
   document.getElementById('attempts').textContent = 'Attempt ' + att;
   document.getElementById('highTxt').textContent = 'Best: ' + highScore + 'm';
@@ -1001,34 +1009,63 @@ function drawBG() {
     X.fillRect(ssx, s.y, s.sz, s.sz);
   }
 
+  // Ground area below blocks
   X.fillStyle = z.gnd;
-  X.fillRect(0, GND, W, H - GND);
+  X.fillRect(0, GND + T, W, H - GND - T);
 
-  X.fillStyle = z.gl + '30';
-  const dStep = 7;
-  const dStart = Math.floor(camX / dStep) * dStep;
-  for (let gx = dStart; gx < camX + W; gx += dStep) {
-    const r1 = Math.abs(Math.sin(gx * 12.9898) * 43758.5453 % 1);
-    const r2 = Math.abs(Math.sin(gx * 78.233) * 43758.5453 % 1);
-    const gh = 2 + r1 * 5;
-    const gw = 2 + r2 * 3;
-    const dx = gx - camX;
-    X.beginPath();
-    X.moveTo(dx, GND); X.lineTo(dx + gw, GND); X.lineTo(dx + gw/2, GND - gh);
-    X.closePath(); X.fill();
+  const go = camX % T;
+  const bgCols = Math.ceil(W / T) + 2;
+
+  // --- CEILING: row of blocks at top + spikes hanging down ---
+  for (let col = -1; col < bgCols; col++) {
+    const bx = col * T - go;
+    // ceiling block at y=0
+    X.fillStyle = '#111';
+    X.fillRect(bx, 0, T, T);
+    X.strokeStyle = 'rgba(255,255,255,0.18)'; X.lineWidth = 0.7;
+    for (let i = T/4; i < T; i += T/4) {
+      X.beginPath(); X.moveTo(bx+i, 0); X.lineTo(bx+i, T); X.stroke();
+      X.beginPath(); X.moveTo(bx, i); X.lineTo(bx+T, i); X.stroke();
+    }
+    X.strokeStyle = '#fff'; X.lineWidth = 1.5;
+    X.strokeRect(bx+0.5, 0.5, T-1, T-1);
+    X.fillStyle = 'rgba(255,255,255,0.05)';
+    X.fillRect(bx+2, 2, T-4, (T-4)/2);
+    // spike hanging below ceiling block — scattered, not every one
+    // use tile index for consistent placement per tile
+    const tileIdx = Math.floor((col * T - go + camX) / T);
+    const hasCeilSpike = (Math.abs(Math.sin(tileIdx * 7.31)) % 1) < 0.5;
+    if (hasCeilSpike) {
+      X.fillStyle = z.sk;
+      X.beginPath(); X.moveTo(bx+T/2, T+T/2-2); X.lineTo(bx+T-3, T); X.lineTo(bx+3, T); X.closePath(); X.fill();
+      X.fillStyle = z.skIn;
+      X.beginPath(); X.moveTo(bx+T/2, T+T/2-10); X.lineTo(bx+T-9, T+2); X.lineTo(bx+9, T+2); X.closePath(); X.fill();
+      X.strokeStyle = z.skB; X.lineWidth = 1.5;
+      X.beginPath(); X.moveTo(bx+T/2, T+T/2-2); X.lineTo(bx+T-3, T); X.lineTo(bx+3, T); X.closePath(); X.stroke();
+    }
   }
 
+  // --- GROUND: row of blocks + scattered decorative spikes on top ---
+  for (let col = -1; col < bgCols; col++) {
+    const bx = col * T - go;
+    X.fillStyle = '#111';
+    X.fillRect(bx, GND, T, T);
+    X.strokeStyle = 'rgba(255,255,255,0.18)'; X.lineWidth = 0.7;
+    for (let i = T/4; i < T; i += T/4) {
+      X.beginPath(); X.moveTo(bx+i, GND); X.lineTo(bx+i, GND+T); X.stroke();
+      X.beginPath(); X.moveTo(bx, GND+i); X.lineTo(bx+T, GND+i); X.stroke();
+    }
+    X.strokeStyle = '#fff'; X.lineWidth = 1.5;
+    X.strokeRect(bx+0.5, GND+0.5, T-1, T-1);
+    X.fillStyle = 'rgba(255,255,255,0.05)';
+    X.fillRect(bx+2, GND+2, T-4, (T-4)/2);
+    // ground spikes are real collision objects, generated in generateAhead
+  }
+
+  // Glow lines at ground and ceiling
   X.strokeStyle = z.gl; X.lineWidth = 2;
   X.beginPath(); X.moveTo(0, GND); X.lineTo(W, GND); X.stroke();
-
-  X.strokeStyle = z.gl + '15'; X.lineWidth = 1;
-  const go = camX % T;
-  for (let x = -go; x < W + T; x += T) {
-    X.beginPath(); X.moveTo(x, GND); X.lineTo(x, H); X.stroke();
-  }
-  for (let y = GND + T; y < H; y += T) {
-    X.beginPath(); X.moveTo(0, y); X.lineTo(W, y); X.stroke();
-  }
+  X.beginPath(); X.moveTo(0, T); X.lineTo(W, T); X.stroke();
 }
 
 function drawBlock(bx, by) {
