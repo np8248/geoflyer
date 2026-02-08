@@ -547,6 +547,27 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     } catch(e) {}
   })();
+  // Check if player has per-user granted skins/trails
+  (async function checkUserGrants() {
+    try {
+      const username = localStorage.getItem('geoflyer-username');
+      if (!username) return;
+      const res = await fetch('/api/grant-items?username=' + encodeURIComponent(username.trim().toLowerCase()));
+      const data = await res.json();
+      if (data.skins && data.skins.length) {
+        const skins = JSON.parse(localStorage.getItem('geoflyer-unlocked') || '[0,1,2,3]');
+        let changed = false;
+        data.skins.forEach(s => { if (!skins.includes(s)) { skins.push(s); changed = true; } });
+        if (changed) localStorage.setItem('geoflyer-unlocked', JSON.stringify(skins));
+      }
+      if (data.trails && data.trails.length) {
+        const trails = JSON.parse(localStorage.getItem('geoflyer-unlocked-trails') || '[0,1]');
+        let changed = false;
+        data.trails.forEach(t => { if (!trails.includes(t)) { trails.push(t); changed = true; } });
+        if (changed) localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify(trails));
+      }
+    } catch(e) {}
+  })();
   // Initialize default unlocks if missing
   if (!localStorage.getItem('geoflyer-unlocked')) localStorage.setItem('geoflyer-unlocked', JSON.stringify([0,1,2,3]));
   if (!localStorage.getItem('geoflyer-coins')) localStorage.setItem('geoflyer-coins', '0');
