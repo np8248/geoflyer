@@ -16,7 +16,7 @@ body {
   font-family: 'Arial', sans-serif;
 }
 
-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+canvas#bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
 
 .menu {
   position: relative;
@@ -108,6 +108,113 @@ h2 {
   border: 1px solid rgba(255, 100, 0, 0.3);
 }
 
+.skin-btn {
+  margin-top: 8px;
+  padding: 10px 32px;
+  background: rgba(10, 10, 40, 0.85);
+  border: 2px solid #2a2a60;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Arial', sans-serif;
+}
+.skin-btn:hover {
+  border-color: #0af;
+  box-shadow: 0 4px 20px rgba(0, 170, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+#skinOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 100;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: background 0.4s;
+}
+#skinOverlay.open { display: flex; }
+
+.skin-picker {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.skin-arrow {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.8);
+  font-size: 48px;
+  cursor: pointer;
+  user-select: none;
+  padding: 10px;
+  transition: all 0.12s;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.skin-arrow:hover {
+  color: #fff;
+  transform: scale(1.2);
+}
+#skinPreviewBox {
+  width: 260px;
+  height: 220px;
+  background: rgba(0,0,0,0.55);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 12px rgba(0,0,0,0.4);
+}
+#skinPreviewBox canvas {
+  display: block;
+}
+#skinTitle {
+  color: #fff;
+  font-size: 28px;
+  font-weight: bold;
+  text-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+#skinName {
+  color: rgba(255,255,255,0.6);
+  font-size: 18px;
+  margin-top: 4px;
+  margin-bottom: 20px;
+  text-shadow: 0 0 10px rgba(0,0,0,0.4);
+}
+.skin-close-x {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 32px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.skin-close-x:hover {
+  color: #fff;
+}
+.skin-back {
+  margin-top: 24px;
+  padding: 10px 36px;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.25);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Arial', sans-serif;
+}
+.skin-back:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.5);
+}
+
 .controls-hint {
   margin-top: 20px;
   color: #556;
@@ -145,12 +252,15 @@ h2 {
     </a>
   </div>
 
+  <button class="skin-btn" onclick="document.getElementById('skinOverlay').classList.add('open')">Skins</button>
+
   <div class="controls-hint">
     <span class="kbd">Space</span> / <span class="kbd">Click</span> Hold to fly up, release to fall<br>
     <span class="kbd">P</span> Pause &nbsp;
     <span class="kbd">G</span> God Mode &nbsp;
     <span class="kbd">R</span> Restart &nbsp;
-    <span class="kbd">H</span> Hitboxes
+    <span class="kbd">H</span> Hitboxes &nbsp;
+    <span class="kbd">C</span> Cycle Skin
   </div>
 </div>
 
@@ -232,6 +342,315 @@ function draw() {
   requestAnimationFrame(draw);
 }
 draw();
+</script>
+
+<div id="skinOverlay">
+  <button class="skin-close-x" onclick="document.getElementById('skinOverlay').classList.remove('open')">&times;</button>
+  <div id="skinTitle">Skin Select</div>
+  <div id="skinName"></div>
+  <div class="skin-picker">
+    <button class="skin-arrow" id="skinPrev">&#9664;</button>
+    <div id="skinPreviewBox">
+      <canvas id="skinCanvas" width="240" height="190"></canvas>
+    </div>
+    <button class="skin-arrow" id="skinNext">&#9654;</button>
+  </div>
+  <button class="skin-back" onclick="document.getElementById('skinOverlay').classList.remove('open')">Back</button>
+</div>
+
+<script>
+(function() {
+  const SKIN_NAMES = ['Sci-fi', 'Neon Racer', 'Classic', 'Rocket', 'Phoenix', 'Stealth', 'Ice Crystal'];
+  // Full-screen overlay backgrounds per skin (saturated like GD)
+  const SKIN_BG = ['#0c1a3a', '#2e0a4a', '#0a3020', '#3a1010', '#3a1a00', '#0a0a12', '#0a1a2e'];
+  const PW = 240, PH = 190;
+  let activeSkin = parseInt(localStorage.getItem('geoflyer-skin') || '0');
+
+  function drawPreview() {
+    const skinIdx = activeSkin;
+    const canvas = document.getElementById('skinCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, PW, PH);
+
+    // Set full-screen overlay background
+    document.getElementById('skinOverlay').style.background = SKIN_BG[skinIdx];
+
+    ctx.save();
+    ctx.translate(PW / 2 + 10, PH / 2);
+    const S = 80;
+    const now = Date.now();
+
+    switch (skinIdx) {
+      case 0: { // Sci-fi
+        const ft = now * 0.008;
+        for (let i = 0; i < 8; i++) {
+          const fx = -S/2 - 10 - i * 8 + Math.sin(ft + i) * 3;
+          const fy = (Math.sin(ft * 1.3 + i * 2)) * 5;
+          const sz = 7 - i * 0.7;
+          ctx.globalAlpha = 0.7 - i * 0.08;
+          ctx.fillStyle = i < 4 ? '#ff6600' : '#ffcc00';
+          ctx.beginPath(); ctx.arc(fx, fy, Math.max(1, sz), 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        const glow = 6 + Math.sin(now * 0.005) * 3;
+        ctx.save(); ctx.shadowColor = '#0ff'; ctx.shadowBlur = 15;
+        ctx.fillStyle = '#0ff'; ctx.globalAlpha = 0.6;
+        ctx.beginPath(); ctx.arc(-S/2 + 3, 0, glow, 0, Math.PI * 2); ctx.fill();
+        ctx.restore(); ctx.globalAlpha = 1;
+        ctx.fillStyle = '#1a1a2e';
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 8, 0); ctx.lineTo(S/6, -S/2 + 3);
+        ctx.lineTo(-S/2, -S/3); ctx.lineTo(-S/2, S/3);
+        ctx.lineTo(S/6, S/2 - 3); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#12122a';
+        ctx.beginPath(); ctx.moveTo(S/6, -S/2 + 3); ctx.lineTo(-S/4, -S/4); ctx.lineTo(-S/2 - 3, -S/2 + 10); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(S/6, S/2 - 3); ctx.lineTo(-S/4, S/4); ctx.lineTo(-S/2 - 3, S/2 - 10); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#0ff'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(S/2 + 4, 0); ctx.lineTo(-S/2 + 6, 0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(S/4, -3); ctx.lineTo(-S/6, -S/3 + 6); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(S/4, 3); ctx.lineTo(-S/6, S/3 - 6); ctx.stroke();
+        ctx.fillStyle = '#0af';
+        ctx.beginPath(); ctx.ellipse(S/6, 0, 7, 5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.ellipse(S/6 + 2, -1.5, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
+        break;
+      }
+      case 1: { // Neon Racer
+        const nt = now * 0.003;
+        const hue = (nt * 30) % 360;
+        const c1 = `hsl(${hue}, 100%, 55%)`;
+        const c2 = `hsl(${hue + 180}, 100%, 55%)`;
+        for (let i = 1; i <= 8; i++) {
+          ctx.globalAlpha = 0.35 - i * 0.04;
+          ctx.strokeStyle = c1; ctx.lineWidth = 4 - i * 0.4;
+          ctx.beginPath(); ctx.moveTo(-S/2 - i * 10, -2); ctx.lineTo(-S/2 - i * 10 - 7, -2); ctx.stroke();
+          ctx.strokeStyle = c2;
+          ctx.beginPath(); ctx.moveTo(-S/2 - i * 10, 2); ctx.lineTo(-S/2 - i * 10 - 7, 2); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        ctx.save(); ctx.shadowColor = c1; ctx.shadowBlur = 12;
+        ctx.fillStyle = c1;
+        ctx.beginPath(); ctx.moveTo(S/2 + 5, 0); ctx.lineTo(0, -S/2); ctx.lineTo(-S/2, -S/3); ctx.lineTo(-S/2 + 7, 0); ctx.closePath(); ctx.fill();
+        ctx.shadowColor = c2;
+        ctx.fillStyle = c2;
+        ctx.beginPath(); ctx.moveTo(S/2 + 5, 0); ctx.lineTo(0, S/2); ctx.lineTo(-S/2, S/3); ctx.lineTo(-S/2 + 7, 0); ctx.closePath(); ctx.fill();
+        ctx.restore();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(S/2 + 3, 0); ctx.lineTo(-S/2 + 7, 0); ctx.stroke();
+        const pulse = 4 + Math.sin(nt * 3) * 2.5;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(0, 0, pulse, 0, Math.PI * 2); ctx.fill();
+        break;
+      }
+      case 2: { // Classic GD
+        const bob = Math.sin(now * 0.003) * 3;
+        ctx.translate(0, bob);
+        // Trail
+        ctx.globalAlpha = 0.3; ctx.fillStyle = '#0f0';
+        ctx.fillRect(-S/2 - 30, -6, 30, 12);
+        ctx.globalAlpha = 0.15; ctx.fillRect(-S/2 - 55, -5, 28, 10);
+        ctx.globalAlpha = 1;
+        const grd2 = ctx.createLinearGradient(-S/2, -S/2, S/2, S/2);
+        grd2.addColorStop(0, '#00e676'); grd2.addColorStop(1, '#00bfa5');
+        ctx.fillStyle = grd2;
+        ctx.beginPath(); ctx.moveTo(S/2, 0); ctx.lineTo(-S/2, -S/2); ctx.lineTo(-S/2 + 10, 0); ctx.lineTo(-S/2, S/2); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#00c853';
+        ctx.beginPath(); ctx.moveTo(-S/6, -S/2 + 3); ctx.lineTo(-S/4, -S/2 - 8); ctx.lineTo(-S/2 + 3, -S/2 + 6); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-S/6, S/2 - 3); ctx.lineTo(-S/4, S/2 + 8); ctx.lineTo(-S/2 + 3, S/2 - 6); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.beginPath(); ctx.moveTo(S/2 - 8, -2); ctx.lineTo(-S/2 + 10, -S/2 + 10); ctx.lineTo(-S/2 + 18, 0); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#1b5e20'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(S/2, 0); ctx.lineTo(-S/2, -S/2); ctx.lineTo(-S/2 + 10, 0); ctx.lineTo(-S/2, S/2); ctx.closePath(); ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.fillRect(-4, -8, 16, 13);
+        ctx.fillStyle = '#000'; ctx.fillRect(2, -5, 8, 8);
+        break;
+      }
+      case 3: { // Rocket
+        const rt = now * 0.01;
+        for (let i = 0; i < 10; i++) {
+          const fx = -S/2 - 8 - i * 7 + Math.sin(rt * 2 + i * 1.3) * 4;
+          const fy = Math.sin(rt + i * 0.8) * 6;
+          const sz = 8 - i * 0.7;
+          ctx.globalAlpha = 0.8 - i * 0.07;
+          ctx.fillStyle = i < 5 ? '#ff6600' : '#ffcc00';
+          ctx.beginPath(); ctx.arc(fx, fy, Math.max(1, sz), 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#cc2222';
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 5, 0);
+        ctx.quadraticCurveTo(S/2 + 8, -S/3, S/6, -S/3);
+        ctx.lineTo(-S/2, -S/3); ctx.lineTo(-S/2, S/3);
+        ctx.lineTo(S/6, S/3);
+        ctx.quadraticCurveTo(S/2 + 8, S/3, S/2 + 5, 0);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.fillRect(-S/4, -S/3 + 3, S/3, S*2/3 - 6);
+        ctx.fillStyle = '#ee4444';
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 3, 0);
+        ctx.quadraticCurveTo(S/2 + 5, -S/4, S/6, -S/4);
+        ctx.lineTo(S/6, 0); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#991111';
+        ctx.beginPath(); ctx.moveTo(-S/2, -S/3); ctx.lineTo(-S/2 - 8, -S/2 - 4); ctx.lineTo(-S/3, -S/3); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-S/2, S/3); ctx.lineTo(-S/2 - 8, S/2 + 4); ctx.lineTo(-S/3, S/3); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#661111'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 5, 0);
+        ctx.quadraticCurveTo(S/2 + 8, -S/3, S/6, -S/3);
+        ctx.lineTo(-S/2, -S/3); ctx.lineTo(-S/2, S/3); ctx.lineTo(S/6, S/3);
+        ctx.quadraticCurveTo(S/2 + 8, S/3, S/2 + 5, 0);
+        ctx.closePath(); ctx.stroke();
+        ctx.save(); ctx.shadowColor = '#adf'; ctx.shadowBlur = 8;
+        ctx.fillStyle = '#aaddff';
+        ctx.beginPath(); ctx.arc(S/8, 0, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(S/8 + 2, -2, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        break;
+      }
+      case 4: { // Phoenix
+        const pt = now * 0.008;
+        // Ember trail
+        for (let i = 0; i < 10; i++) {
+          const fx = -S/2 - 8 - i * 6 + Math.sin(pt * 1.5 + i * 1.7) * 4;
+          const fy = Math.sin(pt * 2 + i * 1.1) * 8;
+          const sz = 6 - i * 0.5;
+          ctx.globalAlpha = 0.7 - i * 0.06;
+          ctx.fillStyle = i < 4 ? '#ff4400' : (i < 7 ? '#ff8800' : '#ffcc00');
+          ctx.beginPath(); ctx.arc(fx, fy, Math.max(1, sz), 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        // Body
+        const pgrd = ctx.createLinearGradient(-S/2, -S/2, S/2, S/2);
+        pgrd.addColorStop(0, '#ff6600'); pgrd.addColorStop(1, '#cc2200');
+        ctx.fillStyle = pgrd;
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 8, 0);
+        ctx.lineTo(S/6, -S/2 + 3); ctx.lineTo(-S/2, -S/3);
+        ctx.lineTo(-S/2, S/3); ctx.lineTo(S/6, S/2 - 3);
+        ctx.closePath(); ctx.fill();
+        // Golden feather wings
+        ctx.fillStyle = '#ffaa00';
+        ctx.beginPath(); ctx.moveTo(S/6, -S/2 + 3); ctx.lineTo(-S/6, -S/4); ctx.lineTo(-S/2 - 8, -S/2 + 3); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(S/6, S/2 - 3); ctx.lineTo(-S/6, S/4); ctx.lineTo(-S/2 - 8, S/2 - 3); ctx.closePath(); ctx.fill();
+        // Fire flicker
+        for (let i = 0; i < 3; i++) {
+          const flx = -S/4 - i * 7 + Math.sin(pt * 3 + i) * 3;
+          const fly = -S/2 + 7 + Math.sin(pt * 4 + i * 2) * 4;
+          ctx.globalAlpha = 0.5 - i * 0.12;
+          ctx.fillStyle = '#ffcc00';
+          ctx.beginPath(); ctx.arc(flx, fly, 3.5 - i * 0.5, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(flx, -fly + 2, 3.5 - i * 0.5, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        // Amber eye
+        ctx.save(); ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 10;
+        ctx.fillStyle = '#ffcc44';
+        ctx.beginPath(); ctx.ellipse(S/6, 0, 7, 5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.ellipse(S/6 + 2, -1.5, 3, 1.5, 0, 0, Math.PI * 2); ctx.fill();
+        break;
+      }
+      case 5: { // Stealth
+        const st = now * 0.005;
+        // Faint smoke wisps
+        for (let i = 0; i < 6; i++) {
+          ctx.globalAlpha = 0.12 - i * 0.015;
+          ctx.fillStyle = '#222';
+          const sx2 = -S/2 - 8 - i * 12;
+          const sy2 = Math.sin(st + i * 0.9) * 5;
+          ctx.fillRect(sx2, sy2 - 4, 10, 8);
+        }
+        ctx.globalAlpha = 1;
+        // Flat wedge body
+        ctx.fillStyle = '#111118';
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 5, 0);
+        ctx.lineTo(S/6, -S/2 + 6); ctx.lineTo(-S/2, -S/4);
+        ctx.lineTo(-S/2, S/4); ctx.lineTo(S/6, S/2 - 6);
+        ctx.closePath(); ctx.fill();
+        // Angular wings
+        ctx.fillStyle = '#0d0d14';
+        ctx.beginPath(); ctx.moveTo(S/6, -S/2 + 6); ctx.lineTo(-S/6, -S/6); ctx.lineTo(-S/2 - 6, -S/2 + 10); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(S/6, S/2 - 6); ctx.lineTo(-S/6, S/6); ctx.lineTo(-S/2 - 6, S/2 - 10); ctx.closePath(); ctx.fill();
+        // Dark red accent lines
+        ctx.strokeStyle = '#551111'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(S/2 + 2, 0); ctx.lineTo(-S/2 + 6, 0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(S/4, -3); ctx.lineTo(-S/6, -S/4 + 4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(S/4, 3); ctx.lineTo(-S/6, S/4 - 4); ctx.stroke();
+        // Red engine glow
+        ctx.save(); ctx.shadowColor = '#660000'; ctx.shadowBlur = 8;
+        ctx.fillStyle = '#882222';
+        ctx.beginPath(); ctx.arc(-S/2 + 3, 0, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        break;
+      }
+      case 6: { // Ice Crystal
+        const it = now * 0.006;
+        // Sparkle/snowflake trail
+        for (let i = 0; i < 8; i++) {
+          const fx = -S/2 - 8 - i * 8 + Math.sin(it * 1.2 + i * 2) * 4;
+          const fy = Math.sin(it * 1.8 + i * 1.5) * 10;
+          const sz = 4 - i * 0.4;
+          ctx.globalAlpha = 0.6 - i * 0.065;
+          ctx.fillStyle = i % 2 === 0 ? '#aaddff' : '#ffffff';
+          ctx.beginPath(); ctx.arc(fx, fy, Math.max(0.5, sz), 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        // Crystalline diamond body
+        const igrd = ctx.createLinearGradient(-S/2, -S/2, S/2, S/2);
+        igrd.addColorStop(0, '#88ccff'); igrd.addColorStop(0.5, '#cceeff'); igrd.addColorStop(1, '#66aaee');
+        ctx.fillStyle = igrd;
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 8, 0); ctx.lineTo(0, -S/2);
+        ctx.lineTo(-S/2, -S/4); ctx.lineTo(-S/2 + 6, 0);
+        ctx.lineTo(-S/2, S/4); ctx.lineTo(0, S/2);
+        ctx.closePath(); ctx.fill();
+        // Faceted highlights
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.beginPath(); ctx.moveTo(S/2 + 4, 0); ctx.lineTo(0, -S/2 + 6); ctx.lineTo(-S/4, 0); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(200,230,255,0.15)';
+        ctx.beginPath(); ctx.moveTo(S/4, -S/4); ctx.lineTo(-S/6, -S/3); ctx.lineTo(-S/6, 0); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.beginPath(); ctx.moveTo(-S/4, 0); ctx.lineTo(-S/2 + 6, S/4); ctx.lineTo(0, S/3); ctx.closePath(); ctx.fill();
+        // Icy outline
+        ctx.strokeStyle = '#88bbee'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 8, 0); ctx.lineTo(0, -S/2); ctx.lineTo(-S/2, -S/4);
+        ctx.lineTo(-S/2 + 6, 0); ctx.lineTo(-S/2, S/4); ctx.lineTo(0, S/2);
+        ctx.closePath(); ctx.stroke();
+        // Sparkle accents
+        const sp = Math.sin(it * 3) * 0.3 + 0.7;
+        ctx.globalAlpha = sp;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(S/6, -S/6, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-S/6, S/6, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+        break;
+      }
+    }
+    ctx.restore();
+    document.getElementById('skinName').textContent = SKIN_NAMES[skinIdx];
+  }
+
+  function animLoop() {
+    if (document.getElementById('skinOverlay').classList.contains('open')) {
+      drawPreview();
+    }
+    requestAnimationFrame(animLoop);
+  }
+
+  function selectSkin(i) {
+    activeSkin = ((i % SKIN_NAMES.length) + SKIN_NAMES.length) % SKIN_NAMES.length;
+    localStorage.setItem('geoflyer-skin', activeSkin);
+  }
+
+  document.getElementById('skinPrev').addEventListener('click', () => selectSkin(activeSkin - 1));
+  document.getElementById('skinNext').addEventListener('click', () => selectSkin(activeSkin + 1));
+
+  animLoop();
+})();
 </script>
 </body>
 </html>

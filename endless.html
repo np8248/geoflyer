@@ -14,6 +14,7 @@ canvas{display:block}
 #ptext{position:absolute;top:20px;color:#fff;font-size:13px;text-shadow:1px 1px 2px #000}
 #scoreTxt{position:absolute;top:10px;left:20px;color:#0f0;font-size:18px;font-weight:bold;text-shadow:0 0 8px #0f0;pointer-events:none}
 #highTxt{position:absolute;top:32px;left:20px;color:#ff0;font-size:12px;text-shadow:1px 1px 2px #000;pointer-events:none}
+#coinTxt{position:absolute;top:10px;right:100px;color:#ffd600;font-size:16px;font-weight:bold;text-shadow:0 0 8px #ffd600;pointer-events:none}
 #attempts{color:#ff0;font-size:13px;position:absolute;top:36px;text-shadow:1px 1px 2px #000}
 #pauseBtn{position:absolute;top:8px;right:12px;pointer-events:auto;cursor:pointer;color:#fff;font-size:22px;text-shadow:1px 1px 3px #000;opacity:0.7;user-select:none}
 #pauseBtn:hover{opacity:1}
@@ -53,6 +54,7 @@ canvas{display:block}
 <div id="ui">
   <div id="scoreTxt">0m</div>
   <div id="highTxt">Best: 0m</div>
+  <div id="coinTxt">&#9733; 0</div>
   <div id="attempts"></div>
   <a id="homeBtn" href="index.html">&#9664; MENU</a>
   <div id="godBtn" onclick="toggleGod()">GOD</div>
@@ -67,6 +69,7 @@ canvas{display:block}
     <div class="key" id="k-r">R</div>
     <div class="key" id="k-h">H</div>
     <div class="key" id="k-m">M</div>
+    <div class="key" id="k-c">C</div>
     <div class="key" id="k-mouse">MOUSE</div>
   </div>
 </div>
@@ -158,6 +161,8 @@ let SHIP_GRAV = 0.3;
 let SHIP_MAX = 7;
 let PSIZ = T - 4;
 const G = Math.floor(GND / T);
+let shipSkin = parseInt(localStorage.getItem('geoflyer-skin') || '0');
+const SKIN_COUNT = 7;
 
 // Sidebar
 function toggleSidebar() {
@@ -195,6 +200,7 @@ function sx(x) { return x; }
 // STATE
 // ================================================================
 let state = 'start', camX = 0, att = 1, particles = [];
+let coinsGot = 0;
 let inputDown = false, inputTap = false, holdJump = false;
 let canRestart = false;
 let godMode = false;
@@ -250,6 +256,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'g' || e.key === 'G') { keyFlash('k-g'); toggleGod(); return; }
   if (e.key === 'r' || e.key === 'R') { keyFlash('k-r'); forceRestart(); return; }
   if (e.key === 'h' || e.key === 'H') { keyFlash('k-h'); toggleHitboxes(); return; }
+  if (e.key === 'c' || e.key === 'C') { keyFlash('k-c'); shipSkin = (shipSkin + 1) % SKIN_COUNT; localStorage.setItem('geoflyer-skin', shipSkin); return; }
   if (e.key === 'm' || e.key === 'M') { keyFlash('k-m'); window.location.href = 'index.html'; return; }
   if (e.code === 'Space') { keyOn('k-space'); e.preventDefault(); inputDown = true; holdJump = true; inputTap = true; onInput(); }
   if (e.code === 'ArrowUp') { keyOn('k-up'); e.preventDefault(); inputDown = true; holdJump = true; inputTap = true; onInput(); }
@@ -313,8 +320,12 @@ let gndSpikeX = 0; // next tile x for ground spike generation
 let ceilGenX = 0; // next tile x for ceiling block generation
 let ceilSpikeX = 0; // next tile x for ceiling spike generation
 let ceilBumpX = 0; // next tile x for ceiling bump generation
+let coinGenX = 30; // next tile x for coin line generation
 let highScore = 0;
 try { highScore = parseInt(localStorage.getItem('endless-high') || '0'); } catch(e) {}
+
+// Ceiling occupies rows 0-2; floor obstacles must leave at least 4 rows of gap below row 3
+const MAX_FLOOR_H = G - 3 - 4; // = 4 for G=11
 
 // Difficulty ramps with distance: 0 = easy, 1 = hardest
 function diff() { return Math.min(1, camX / 40000); }
@@ -407,7 +418,7 @@ const patterns = [
 
   // --- PYRAMID: triangular block mass from floor, spikes on top ---
   function pyramidFloor() {
-    const h = rngInt(2, 4 + Math.floor(diff()));
+    const h = rngInt(2, Math.min(MAX_FLOOR_H, 4 + Math.floor(diff())));
     if (h >= G - 3) return 0;
     const cx = genX + h;
     const baseW = buildPyramid(cx, h);
@@ -447,7 +458,7 @@ const patterns = [
   // --- PILLAR: column from floor with stepped edges, fly over ---
   function floorPillar() {
     const w = rngInt(2, 3);
-    const h = rngInt(3, 5 + Math.floor(diff()));
+    const h = rngInt(2, Math.min(MAX_FLOOR_H, 5 + Math.floor(diff())));
     if (h >= G - 3) return 0;
     blockRect(genX, G - h, w, h);
     floorSteps(genX, G - h, w);
@@ -486,7 +497,7 @@ const patterns = [
   function altPillars() {
     const w = rngInt(2, 3);
     const spacing = rngInt(5, 8);
-    const fh = rngInt(3, 5 + Math.floor(diff()));
+    const fh = rngInt(2, Math.min(MAX_FLOOR_H, 5 + Math.floor(diff())));
     const ch = rngInt(3, 5 + Math.floor(diff()));
     if (fh >= G - 3 || ch >= G - 3) return 0;
     blockRect(genX, G - fh, w, fh);
@@ -540,12 +551,12 @@ const patterns = [
 
   // --- STAIRCASE UP: ascending steps from floor ---
   function staircaseUp() {
-    const steps = rngInt(3, 5);
+    const steps = rngInt(2, Math.min(MAX_FLOOR_H, 4));
     const stepW = rngInt(2, 3);
     let ox = 0;
     for (let s = 0; s < steps; s++) {
       const h = s + 1;
-      if (h >= G - 3) break;
+      if (h > MAX_FLOOR_H) break;
       blockRect(genX + ox, G - h, stepW, h);
       spikeRowAbove(genX + ox, G - h - 1, stepW);
       ox += stepW;
@@ -572,7 +583,7 @@ const patterns = [
   function wallWithWindow() {
     const w = rngInt(2, 4);
     const winH = 4;
-    const winRow = rngInt(2, G - winH - 2);
+    const winRow = rngInt(3, G - winH - 2);
     for (let i = 0; i < w; i++) {
       for (let j = 0; j < winRow; j++) addObj('B', genX + i, j);
       for (let j = winRow + winH; j < G; j++) addObj('B', genX + i, j);
@@ -590,8 +601,8 @@ const patterns = [
     const baseW = rngInt(4, 6);
     const baseH = rngInt(1, 2);
     const towerW = 2;
-    const towerH = rngInt(2, 4 + Math.floor(diff()));
-    if (baseH + towerH >= G - 3) return 0;
+    const towerH = rngInt(2, Math.min(MAX_FLOOR_H - baseH, 4 + Math.floor(diff())));
+    if (towerH < 1 || baseH + towerH >= G - 3) return 0;
     const towerSide = rng() < 0.5 ? 0 : baseW - towerW;
     blockRect(genX, G - baseH, baseW, baseH);
     blockRect(genX + towerSide, G - baseH - towerH, towerW, towerH);
@@ -642,7 +653,7 @@ const patterns = [
   // --- U-SHAPE: walls with stepped edges and spiked floor ---
   function uShape() {
     const w = rngInt(6, 10);
-    const wallH = rngInt(2, 4 + Math.floor(diff()));
+    const wallH = rngInt(2, Math.min(MAX_FLOOR_H, 4 + Math.floor(diff())));
     if (wallH >= G - 3) return 0;
     const wallW = 2;
     blockRect(genX, G - wallH, wallW, wallH);
@@ -771,7 +782,7 @@ const patterns = [
   // --- BIG STEPPED MASS: large structure with staircase edge, like GD screenshot ---
   function steppedMass() {
     const baseW = rngInt(6, 10);
-    const maxH = rngInt(4, 6 + Math.floor(diff()));
+    const maxH = rngInt(3, Math.min(MAX_FLOOR_H, 6 + Math.floor(diff())));
     if (maxH >= G - 3) return 0;
     const fromFloor = rng() < 0.5;
     const stairSide = rng() < 0.5 ? 'left' : 'right';
@@ -823,27 +834,61 @@ function generateAhead() {
     addObj('B', ceilGenX, 1);
     ceilGenX++;
   }
+  // Ceiling spikes — skip if column has any floor blocks in upper half (would block path)
   while (ceilSpikeX < aheadTile) {
-    if (rng() < 0.4) {
+    let blocked = false;
+    for (let r = 3; r <= 6; r++) {
+      if (blockSet.has(ceilSpikeX + ',' + r)) { blocked = true; break; }
+    }
+    if (!blocked && rng() < 0.4) {
       addObj(rng() < 0.5 ? 'CS' : 'SCS', ceilSpikeX, 2);
     }
     ceilSpikeX++;
   }
-  // Ceiling bumps: occasional block clusters hanging down for texture
+  // Ceiling bumps — skip if column has floor blocks nearby
   while (ceilBumpX < aheadTile) {
-    if (rng() < 0.08) {
+    let blocked = false;
+    for (let r = 3; r <= 6; r++) {
+      if (blockSet.has(ceilBumpX + ',' + r)) { blocked = true; break; }
+    }
+    if (!blocked && rng() < 0.08) {
       const bw = rngInt(1, 2);
       for (let i = 0; i < bw; i++) addObj('B', ceilBumpX + i, 2);
-      ceilBumpX += bw + rngInt(6, 12); // space out bumps
+      ceilBumpX += bw + rngInt(6, 12);
     }
     ceilBumpX++;
   }
-  // Scatter ground spikes — real collision objects at row G-1
+  // Scatter ground spikes — skip if column already has floor blocks above ground
   while (gndSpikeX < aheadTile) {
-    if (rng() < 0.35) {
+    const hasBlock = blockSet.has(gndSpikeX + ',' + (G - 1)) || blockSet.has(gndSpikeX + ',' + (G - 2));
+    if (!hasBlock && rng() < 0.35) {
       addObj(rng() < 0.5 ? 'S' : 'SS', gndSpikeX, G - 1);
     }
     gndSpikeX++;
+  }
+  // Coin lines — 5 horizontal coins in clear space, spaced out
+  while (coinGenX < aheadTile) {
+    if (rng() < 0.12) {
+      // Pick a row in the safe flying zone (rows 4-8)
+      const row = rngInt(4, G - 3);
+      // Check all 5 columns are clear of blocks and spikes
+      let clear = true;
+      for (let i = 0; i < 5; i++) {
+        const cx = coinGenX + i;
+        for (let r = row - 1; r <= row + 1; r++) {
+          if (blockSet.has(cx + ',' + r)) { clear = false; break; }
+        }
+        if (!clear) break;
+      }
+      if (clear) {
+        for (let i = 0; i < 5; i++) {
+          addObj('CN', coinGenX + i, row);
+        }
+        coinGenX += 5 + rngInt(15, 30);
+        continue;
+      }
+    }
+    coinGenX++;
   }
 }
 
@@ -883,7 +928,8 @@ function startGame() {
   state = 'playing'; camX = 0; canRestart = false;
   P = { x: 120, y: GND/2 - PSIZ/2, vy: 0, rot: 0, onG: false, dead: false, ship: true };
   particles = []; inputTap = false;
-  L.length = 0; blockSet.clear(); genX = 20; gndSpikeX = 0; ceilGenX = 0; ceilSpikeX = 0; ceilBumpX = 0; // reset level
+  coinsGot = 0;
+  L.length = 0; blockSet.clear(); genX = 20; gndSpikeX = 0; ceilGenX = 0; ceilSpikeX = 0; ceilBumpX = 0; coinGenX = 30; // reset level
   generateAhead(); // pre-fill screen
   document.getElementById('attempts').textContent = 'Attempt ' + att;
   document.getElementById('highTxt').textContent = 'Best: ' + highScore + 'm';
@@ -905,7 +951,7 @@ function kill() {
   setTimeout(() => {
     const dist = Math.floor(camX / T);
     if (dist > highScore) { highScore = dist; localStorage.setItem('endless-high', highScore); }
-    document.getElementById('deathP').textContent = 'Distance: ' + dist + 'm  |  Best: ' + highScore + 'm';
+    document.getElementById('deathP').textContent = 'Distance: ' + dist + 'm  |  Best: ' + highScore + 'm  |  Coins: ' + coinsGot;
     show('deathS');
     setTimeout(() => { canRestart = true; }, 600);
   }, 600);
@@ -1048,6 +1094,7 @@ function update() {
 
   const dist = Math.floor(camX / T);
   document.getElementById('scoreTxt').textContent = dist + 'm';
+  document.getElementById('coinTxt').textContent = '\u2733 ' + coinsGot;
 }
 
 // ================================================================
@@ -1316,6 +1363,498 @@ function drawObjects() {
   }
 }
 
+// ================================================================
+// SHIP SKINS
+// ================================================================
+
+// --- Skin 0: Sci-fi Spaceship ---
+function drawShipSkin0() {
+  const h = PSIZ, w = PSIZ;
+  // Flame trail
+  const t = Date.now() * 0.008;
+  for (let i = 0; i < 6; i++) {
+    const fx = -w/2 - 10 - i * 6 + Math.sin(t + i) * 2;
+    const fy = (Math.random() - 0.5) * 6;
+    const sz = 5 - i * 0.6;
+    X.globalAlpha = 0.7 - i * 0.1;
+    X.fillStyle = i < 3 ? '#ff6600' : '#ffcc00';
+    X.beginPath(); X.arc(fx, fy, Math.max(1, sz), 0, Math.PI * 2); X.fill();
+  }
+  X.globalAlpha = 1;
+  // Cyan engine glow
+  X.save();
+  X.shadowColor = '#0ff'; X.shadowBlur = 12;
+  X.fillStyle = '#0ff';
+  X.beginPath(); X.arc(-w/2 + 2, 0, 4, 0, Math.PI * 2); X.fill();
+  X.restore();
+  // Dark body
+  X.fillStyle = '#1a1a2e';
+  X.beginPath();
+  X.moveTo(w/2 + 4, 0);       // pointed nose
+  X.lineTo(w/6, -h/2 + 2);    // top wing edge
+  X.lineTo(-w/2, -h/3);       // back top
+  X.lineTo(-w/2, h/3);        // back bottom
+  X.lineTo(w/6, h/2 - 2);     // bottom wing edge
+  X.closePath(); X.fill();
+  // Angled wings
+  X.fillStyle = '#12122a';
+  X.beginPath(); X.moveTo(w/6, -h/2 + 2); X.lineTo(-w/4, -h/4); X.lineTo(-w/2 - 2, -h/2 + 6); X.closePath(); X.fill();
+  X.beginPath(); X.moveTo(w/6, h/2 - 2); X.lineTo(-w/4, h/4); X.lineTo(-w/2 - 2, h/2 - 6); X.closePath(); X.fill();
+  // Cyan accent lines
+  X.strokeStyle = '#0ff'; X.lineWidth = 1.2;
+  X.beginPath(); X.moveTo(w/2 + 2, 0); X.lineTo(-w/2 + 4, 0); X.stroke();
+  X.beginPath(); X.moveTo(w/4, -2); X.lineTo(-w/6, -h/3 + 4); X.stroke();
+  X.beginPath(); X.moveTo(w/4, 2); X.lineTo(-w/6, h/3 - 4); X.stroke();
+  // Cockpit window
+  X.fillStyle = '#0af';
+  X.beginPath(); X.ellipse(w/6, 0, 4, 3, 0, 0, Math.PI * 2); X.fill();
+  X.fillStyle = '#fff';
+  X.beginPath(); X.ellipse(w/6 + 1, -1, 1.5, 1, 0, 0, Math.PI * 2); X.fill();
+}
+
+function drawCubeSkin0() {
+  const h = PSIZ;
+  // Trail
+  X.globalAlpha = 0.3; X.fillStyle = '#0ff';
+  X.fillRect(-h/2 - 14, -h/2 + 4, 14, h - 8); X.globalAlpha = 1;
+  // Body
+  X.fillStyle = '#1a1a2e'; X.fillRect(-h/2, -h/2, h, h);
+  X.fillStyle = '#2a2a4e'; X.fillRect(-h/2 + 3, -h/2 + 3, h - 6, h - 6);
+  X.fillStyle = 'rgba(0,255,255,0.06)'; X.fillRect(-h/2 + 3, -h/2 + 3, h - 6, (h - 6) / 2);
+  X.strokeStyle = '#0ff'; X.lineWidth = 1.5; X.strokeRect(-h/2, -h/2, h, h);
+  // Eye
+  X.fillStyle = '#0af'; X.fillRect(-4, -5, 10, 8);
+  X.fillStyle = '#fff'; X.fillRect(-1, -3, 5, 5);
+}
+
+// --- Skin 1: Neon Racer ---
+function drawShipSkin1() {
+  const h = PSIZ, w = PSIZ;
+  const t = Date.now() * 0.003;
+  const hue1 = (t * 30) % 360;
+  // Light streak trail
+  for (let i = 1; i <= 8; i++) {
+    X.globalAlpha = 0.4 - i * 0.045;
+    X.strokeStyle = `hsl(${hue1}, 100%, 60%)`;
+    X.lineWidth = 3 - i * 0.3;
+    X.beginPath(); X.moveTo(-w/2 - i * 7, -1); X.lineTo(-w/2 - i * 7 - 5, -1); X.stroke();
+    X.strokeStyle = `hsl(${hue1 + 180}, 100%, 60%)`;
+    X.beginPath(); X.moveTo(-w/2 - i * 7, 1); X.lineTo(-w/2 - i * 7 - 5, 1); X.stroke();
+  }
+  X.globalAlpha = 1;
+  // Sharp angular wedge
+  const col1 = `hsl(${hue1}, 100%, 55%)`;
+  const col2 = `hsl(${hue1 + 180}, 100%, 55%)`;
+  X.save();
+  X.shadowColor = col1; X.shadowBlur = 15;
+  X.fillStyle = col1;
+  X.beginPath();
+  X.moveTo(w/2 + 3, 0);
+  X.lineTo(0, -h/2);
+  X.lineTo(-w/2, -h/3);
+  X.lineTo(-w/2 + 4, 0);
+  X.closePath(); X.fill();
+  X.shadowColor = col2;
+  X.fillStyle = col2;
+  X.beginPath();
+  X.moveTo(w/2 + 3, 0);
+  X.lineTo(0, h/2);
+  X.lineTo(-w/2, h/3);
+  X.lineTo(-w/2 + 4, 0);
+  X.closePath(); X.fill();
+  X.restore();
+  // Center line
+  X.strokeStyle = '#fff'; X.lineWidth = 1;
+  X.beginPath(); X.moveTo(w/2, 0); X.lineTo(-w/2 + 4, 0); X.stroke();
+  // Pulsing core
+  const pulse = 2 + Math.sin(t * 3) * 1.5;
+  X.fillStyle = '#fff';
+  X.beginPath(); X.arc(0, 0, pulse, 0, Math.PI * 2); X.fill();
+}
+
+function drawCubeSkin1() {
+  const h = PSIZ;
+  const t = Date.now() * 0.003;
+  const hue1 = (t * 30) % 360;
+  const col1 = `hsl(${hue1}, 100%, 55%)`;
+  // Trail
+  for (let i = 1; i <= 4; i++) {
+    X.globalAlpha = 0.3 - i * 0.06;
+    X.fillStyle = col1;
+    X.fillRect(-h/2 - i * 8, -h/2 + 3, 7, h - 6);
+  }
+  X.globalAlpha = 1;
+  X.save();
+  X.shadowColor = col1; X.shadowBlur = 12;
+  X.fillStyle = col1; X.fillRect(-h/2, -h/2, h, h);
+  X.restore();
+  X.fillStyle = `hsl(${hue1 + 180}, 100%, 55%)`; X.fillRect(-h/2 + 3, -h/2 + 3, h - 6, h - 6);
+  X.fillStyle = 'rgba(255,255,255,0.15)'; X.fillRect(-h/2 + 3, -h/2 + 3, h - 6, (h - 6) / 2);
+  X.strokeStyle = '#fff'; X.lineWidth = 1.5; X.strokeRect(-h/2, -h/2, h, h);
+  const pulse = 2 + Math.sin(t * 3) * 1;
+  X.fillStyle = '#fff'; X.beginPath(); X.arc(2, 0, pulse, 0, Math.PI * 2); X.fill();
+}
+
+// --- Skin 2: GD-style clean ship/cube ---
+function drawShipSkin2() {
+  const h = PSIZ, w = PSIZ;
+  // Trail
+  X.globalAlpha = 0.35; X.fillStyle = '#0f0';
+  X.fillRect(-w/2 - 20, -4, 22, 8);
+  X.globalAlpha = 0.15; X.fillRect(-w/2 - 38, -3, 20, 6);
+  X.globalAlpha = 1;
+  // Body - gradient green to teal
+  const grd = X.createLinearGradient(-w/2, -h/2, w/2, h/2);
+  grd.addColorStop(0, '#00e676'); grd.addColorStop(1, '#00bfa5');
+  X.fillStyle = grd;
+  X.beginPath();
+  X.moveTo(w/2, 0);
+  X.lineTo(-w/2, -h/2);
+  X.lineTo(-w/2 + 6, 0);
+  X.lineTo(-w/2, h/2);
+  X.closePath(); X.fill();
+  // Small wings
+  X.fillStyle = '#00c853';
+  X.beginPath(); X.moveTo(-w/6, -h/2 + 2); X.lineTo(-w/4, -h/2 - 5); X.lineTo(-w/2 + 2, -h/2 + 4); X.closePath(); X.fill();
+  X.beginPath(); X.moveTo(-w/6, h/2 - 2); X.lineTo(-w/4, h/2 + 5); X.lineTo(-w/2 + 2, h/2 - 4); X.closePath(); X.fill();
+  // Highlight
+  X.fillStyle = 'rgba(255,255,255,0.15)';
+  X.beginPath();
+  X.moveTo(w/2 - 4, -1);
+  X.lineTo(-w/2 + 6, -h/2 + 6);
+  X.lineTo(-w/2 + 10, 0);
+  X.closePath(); X.fill();
+  // Clean outline
+  X.strokeStyle = '#1b5e20'; X.lineWidth = 2;
+  X.beginPath();
+  X.moveTo(w/2, 0); X.lineTo(-w/2, -h/2);
+  X.lineTo(-w/2 + 6, 0); X.lineTo(-w/2, h/2);
+  X.closePath(); X.stroke();
+  // Eye
+  X.fillStyle = '#fff'; X.fillRect(-2, -5, 10, 8);
+  X.fillStyle = '#000'; X.fillRect(2, -3, 5, 5);
+}
+
+function drawCubeSkin2() {
+  const h = PSIZ;
+  // Trail
+  X.globalAlpha = 0.3; X.fillStyle = '#0f0';
+  X.fillRect(-h/2 - 12, -h/2 + 4, 14, h - 8); X.globalAlpha = 1;
+  // Body gradient
+  const grd = X.createLinearGradient(-h/2, -h/2, h/2, h/2);
+  grd.addColorStop(0, '#00e676'); grd.addColorStop(1, '#00bfa5');
+  X.fillStyle = grd; X.fillRect(-h/2, -h/2, h, h);
+  X.fillStyle = 'rgba(255,255,255,0.12)'; X.fillRect(-h/2 + 3, -h/2 + 3, h - 6, (h - 6) / 2);
+  // Small wings
+  X.fillStyle = '#00c853';
+  X.beginPath(); X.moveTo(-h/2 + 4, -h/2); X.lineTo(h/4, -h/2 - 5); X.lineTo(h/4, -h/2); X.closePath(); X.fill();
+  X.beginPath(); X.moveTo(-h/2 + 4, h/2); X.lineTo(h/4, h/2 + 5); X.lineTo(h/4, h/2); X.closePath(); X.fill();
+  // Clean outline
+  X.strokeStyle = '#1b5e20'; X.lineWidth = 2.5; X.strokeRect(-h/2, -h/2, h, h);
+  // Eye
+  X.fillStyle = '#fff'; X.fillRect(-5, -6, 12, 10);
+  X.fillStyle = '#000'; X.fillRect(-1, -3, 6, 6);
+}
+
+// --- Skin 3: Rocket Ship ---
+function drawShipSkin3() {
+  const h = PSIZ, w = PSIZ;
+  const t = Date.now() * 0.01;
+  // Flame exhaust
+  for (let i = 0; i < 8; i++) {
+    const fx = -w/2 - 6 - i * 5 + Math.sin(t * 2 + i * 1.3) * 3;
+    const fy = (Math.sin(t + i * 0.8)) * 4;
+    const sz = 6 - i * 0.6;
+    X.globalAlpha = 0.8 - i * 0.09;
+    X.fillStyle = i < 4 ? '#ff6600' : '#ffcc00';
+    X.beginPath(); X.arc(fx, fy, Math.max(1, sz), 0, Math.PI * 2); X.fill();
+  }
+  X.globalAlpha = 1;
+  // Cylindrical body (red/white)
+  X.fillStyle = '#cc2222';
+  X.beginPath();
+  X.moveTo(w/2 + 2, 0);             // rounded nose tip
+  X.quadraticCurveTo(w/2 + 4, -h/3, w/6, -h/3);
+  X.lineTo(-w/2, -h/3);
+  X.lineTo(-w/2, h/3);
+  X.lineTo(w/6, h/3);
+  X.quadraticCurveTo(w/2 + 4, h/3, w/2 + 2, 0);
+  X.closePath(); X.fill();
+  // White stripe
+  X.fillStyle = '#fff';
+  X.fillRect(-w/4, -h/3 + 2, w/3, h * 2/3 - 4);
+  // Nose cone highlight
+  X.fillStyle = '#ee4444';
+  X.beginPath();
+  X.moveTo(w/2, 0);
+  X.quadraticCurveTo(w/2 + 2, -h/4, w/6, -h/4);
+  X.lineTo(w/6, 0);
+  X.closePath(); X.fill();
+  // Triangular fins
+  X.fillStyle = '#991111';
+  X.beginPath(); X.moveTo(-w/2, -h/3); X.lineTo(-w/2 - 5, -h/2 - 2); X.lineTo(-w/3, -h/3); X.closePath(); X.fill();
+  X.beginPath(); X.moveTo(-w/2, h/3); X.lineTo(-w/2 - 5, h/2 + 2); X.lineTo(-w/3, h/3); X.closePath(); X.fill();
+  // Outline
+  X.strokeStyle = '#661111'; X.lineWidth = 1.5;
+  X.beginPath();
+  X.moveTo(w/2 + 2, 0);
+  X.quadraticCurveTo(w/2 + 4, -h/3, w/6, -h/3);
+  X.lineTo(-w/2, -h/3); X.lineTo(-w/2, h/3); X.lineTo(w/6, h/3);
+  X.quadraticCurveTo(w/2 + 4, h/3, w/2 + 2, 0);
+  X.closePath(); X.stroke();
+  // Porthole window
+  X.save();
+  X.shadowColor = '#adf'; X.shadowBlur = 4;
+  X.fillStyle = '#aaddff';
+  X.beginPath(); X.arc(w/8, 0, 4, 0, Math.PI * 2); X.fill();
+  X.fillStyle = '#fff';
+  X.beginPath(); X.arc(w/8 + 1, -1, 1.5, 0, Math.PI * 2); X.fill();
+  X.restore();
+}
+
+function drawCubeSkin3() {
+  const h = PSIZ;
+  const t = Date.now() * 0.01;
+  // Trail flame
+  for (let i = 1; i <= 4; i++) {
+    X.globalAlpha = 0.5 - i * 0.1;
+    X.fillStyle = i < 2 ? '#ff6600' : '#ffcc00';
+    X.fillRect(-h/2 - i * 7, -h/2 + 6, 6, h - 12);
+  }
+  X.globalAlpha = 1;
+  // Body
+  X.fillStyle = '#cc2222'; X.fillRect(-h/2, -h/2, h, h);
+  X.fillStyle = '#fff'; X.fillRect(-h/2 + 3, -h/2 + 3, h/3, h - 6);
+  X.fillStyle = 'rgba(255,255,255,0.08)'; X.fillRect(-h/2 + 3, -h/2 + 3, h - 6, (h - 6) / 2);
+  // Fins
+  X.fillStyle = '#991111';
+  X.beginPath(); X.moveTo(-h/2, -h/2); X.lineTo(-h/2 - 5, -h/2 - 4); X.lineTo(-h/4, -h/2); X.closePath(); X.fill();
+  X.beginPath(); X.moveTo(-h/2, h/2); X.lineTo(-h/2 - 5, h/2 + 4); X.lineTo(-h/4, h/2); X.closePath(); X.fill();
+  X.strokeStyle = '#661111'; X.lineWidth = 2; X.strokeRect(-h/2, -h/2, h, h);
+  // Porthole
+  X.fillStyle = '#aaddff';
+  X.beginPath(); X.arc(3, 0, 5, 0, Math.PI * 2); X.fill();
+  X.strokeStyle = '#666'; X.lineWidth = 1;
+  X.beginPath(); X.arc(3, 0, 5, 0, Math.PI * 2); X.stroke();
+  X.fillStyle = '#fff';
+  X.beginPath(); X.arc(4, -1, 1.5, 0, Math.PI * 2); X.fill();
+}
+
+// --- Skin 4: Phoenix ---
+function drawShipSkin4() {
+  const h = PSIZ, w = PSIZ;
+  const t = Date.now() * 0.008;
+  // Ember particle trail
+  for (let i = 0; i < 10; i++) {
+    const fx = -w/2 - 8 - i * 6 + Math.sin(t * 1.5 + i * 1.7) * 4;
+    const fy = (Math.sin(t * 2 + i * 1.1)) * 8;
+    const sz = 4 - i * 0.3;
+    X.globalAlpha = 0.7 - i * 0.06;
+    X.fillStyle = i < 4 ? '#ff4400' : (i < 7 ? '#ff8800' : '#ffcc00');
+    X.beginPath(); X.arc(fx, fy, Math.max(1, sz), 0, Math.PI * 2); X.fill();
+  }
+  X.globalAlpha = 1;
+  // Body - orange/red gradient bird shape
+  const grd = X.createLinearGradient(-w/2, -h/2, w/2, h/2);
+  grd.addColorStop(0, '#ff6600'); grd.addColorStop(1, '#cc2200');
+  X.fillStyle = grd;
+  X.beginPath();
+  X.moveTo(w/2 + 5, 0);
+  X.lineTo(w/6, -h/2 + 2);
+  X.lineTo(-w/2, -h/3);
+  X.lineTo(-w/2, h/3);
+  X.lineTo(w/6, h/2 - 2);
+  X.closePath(); X.fill();
+  // Golden feather wing extensions
+  X.fillStyle = '#ffaa00';
+  X.beginPath(); X.moveTo(w/6, -h/2 + 2); X.lineTo(-w/6, -h/4); X.lineTo(-w/2 - 6, -h/2 + 2); X.closePath(); X.fill();
+  X.beginPath(); X.moveTo(w/6, h/2 - 2); X.lineTo(-w/6, h/4); X.lineTo(-w/2 - 6, h/2 - 2); X.closePath(); X.fill();
+  // Animated fire flicker on wings
+  for (let i = 0; i < 3; i++) {
+    const flx = -w/4 - i * 5 + Math.sin(t * 3 + i) * 2;
+    const fly = (-h/2 + 5 + Math.sin(t * 4 + i * 2) * 3);
+    X.globalAlpha = 0.5 - i * 0.12;
+    X.fillStyle = '#ffcc00';
+    X.beginPath(); X.arc(flx, fly, 2.5 - i * 0.4, 0, Math.PI * 2); X.fill();
+    X.beginPath(); X.arc(flx, -fly, 2.5 - i * 0.4, 0, Math.PI * 2); X.fill();
+  }
+  X.globalAlpha = 1;
+  // Amber cockpit eye
+  X.save(); X.shadowColor = '#ffaa00'; X.shadowBlur = 8;
+  X.fillStyle = '#ffcc44';
+  X.beginPath(); X.ellipse(w/6, 0, 5, 3.5, 0, 0, Math.PI * 2); X.fill();
+  X.restore();
+  X.fillStyle = '#fff';
+  X.beginPath(); X.ellipse(w/6 + 1, -1, 2, 1.2, 0, 0, Math.PI * 2); X.fill();
+}
+
+function drawCubeSkin4() {
+  const h = PSIZ;
+  const t = Date.now() * 0.008;
+  // Ember trail
+  for (let i = 1; i <= 5; i++) {
+    X.globalAlpha = 0.4 - i * 0.07;
+    X.fillStyle = i < 3 ? '#ff6600' : '#ffcc00';
+    const fy = Math.sin(t * 2 + i) * 3;
+    X.beginPath(); X.arc(-h/2 - i * 7, fy, 3 - i * 0.4, 0, Math.PI * 2); X.fill();
+  }
+  X.globalAlpha = 1;
+  // Body gradient
+  const grd = X.createLinearGradient(-h/2, -h/2, h/2, h/2);
+  grd.addColorStop(0, '#ff6600'); grd.addColorStop(1, '#cc2200');
+  X.fillStyle = grd; X.fillRect(-h/2, -h/2, h, h);
+  // Flame wisps on edges
+  for (let i = 0; i < 4; i++) {
+    const ey = -h/2 + i * (h/3);
+    const ex = h/2 + Math.sin(t * 3 + i * 1.5) * 2;
+    X.globalAlpha = 0.3;
+    X.fillStyle = '#ffcc00';
+    X.beginPath(); X.arc(ex, ey, 2, 0, Math.PI * 2); X.fill();
+  }
+  X.globalAlpha = 1;
+  // Golden border
+  X.strokeStyle = '#ffaa00'; X.lineWidth = 2; X.strokeRect(-h/2, -h/2, h, h);
+  // Amber eye
+  X.fillStyle = '#ffcc44'; X.fillRect(-3, -5, 10, 8);
+  X.fillStyle = '#fff'; X.fillRect(0, -3, 5, 5);
+}
+
+// --- Skin 5: Stealth ---
+function drawShipSkin5() {
+  const h = PSIZ, w = PSIZ;
+  const t = Date.now() * 0.005;
+  // Faint dark smoke wisps trail
+  for (let i = 0; i < 6; i++) {
+    X.globalAlpha = 0.12 - i * 0.015;
+    X.fillStyle = '#222';
+    const sx = -w/2 - 8 - i * 9;
+    const sy = Math.sin(t + i * 0.9) * 4;
+    X.fillRect(sx, sy - 3, 7, 6);
+  }
+  X.globalAlpha = 1;
+  // Flat wedge stealth bomber shape - matte black
+  X.fillStyle = '#111118';
+  X.beginPath();
+  X.moveTo(w/2 + 3, 0);
+  X.lineTo(w/6, -h/2 + 4);
+  X.lineTo(-w/2, -h/4);
+  X.lineTo(-w/2, h/4);
+  X.lineTo(w/6, h/2 - 4);
+  X.closePath(); X.fill();
+  // Sharp angular wings
+  X.fillStyle = '#0d0d14';
+  X.beginPath(); X.moveTo(w/6, -h/2 + 4); X.lineTo(-w/6, -h/6); X.lineTo(-w/2 - 4, -h/2 + 8); X.closePath(); X.fill();
+  X.beginPath(); X.moveTo(w/6, h/2 - 4); X.lineTo(-w/6, h/6); X.lineTo(-w/2 - 4, h/2 - 8); X.closePath(); X.fill();
+  // Subtle dark red accent lines
+  X.strokeStyle = '#551111'; X.lineWidth = 1;
+  X.beginPath(); X.moveTo(w/2, 0); X.lineTo(-w/2 + 4, 0); X.stroke();
+  X.beginPath(); X.moveTo(w/4, -2); X.lineTo(-w/6, -h/4 + 2); X.stroke();
+  X.beginPath(); X.moveTo(w/4, 2); X.lineTo(-w/6, h/4 - 2); X.stroke();
+  // Small red engine glow at back
+  X.save(); X.shadowColor = '#660000'; X.shadowBlur = 6;
+  X.fillStyle = '#882222';
+  X.beginPath(); X.arc(-w/2 + 2, 0, 3, 0, Math.PI * 2); X.fill();
+  X.restore();
+}
+
+function drawCubeSkin5() {
+  const h = PSIZ;
+  const t = Date.now() * 0.005;
+  // Faint smoke trail
+  for (let i = 1; i <= 4; i++) {
+    X.globalAlpha = 0.08 - i * 0.015;
+    X.fillStyle = '#1a1a1a';
+    X.fillRect(-h/2 - i * 8, -h/2 + 6, 6, h - 12);
+  }
+  X.globalAlpha = 1;
+  // Near-black body
+  X.fillStyle = '#111118'; X.fillRect(-h/2, -h/2, h, h);
+  X.fillStyle = '#0d0d14'; X.fillRect(-h/2 + 3, -h/2 + 3, h - 6, h - 6);
+  // Subtle diagonal accent line
+  X.strokeStyle = '#551111'; X.lineWidth = 1;
+  X.beginPath(); X.moveTo(-h/2 + 4, -h/2 + 4); X.lineTo(h/2 - 4, h/2 - 4); X.stroke();
+  // Thin dark red border
+  X.strokeStyle = '#441111'; X.lineWidth = 1.5; X.strokeRect(-h/2, -h/2, h, h);
+  // Dark red eye
+  X.fillStyle = '#882222'; X.fillRect(-3, -5, 10, 8);
+  X.fillStyle = '#cc4444'; X.fillRect(0, -3, 5, 5);
+}
+
+// --- Skin 6: Ice Crystal ---
+function drawShipSkin6() {
+  const h = PSIZ, w = PSIZ;
+  const t = Date.now() * 0.006;
+  // Sparkle/snowflake trail particles
+  for (let i = 0; i < 8; i++) {
+    const fx = -w/2 - 6 - i * 7 + Math.sin(t * 1.2 + i * 2) * 3;
+    const fy = Math.sin(t * 1.8 + i * 1.5) * 8;
+    const sz = 3 - i * 0.3;
+    X.globalAlpha = 0.6 - i * 0.065;
+    X.fillStyle = i % 2 === 0 ? '#aaddff' : '#ffffff';
+    X.beginPath(); X.arc(fx, fy, Math.max(0.5, sz), 0, Math.PI * 2); X.fill();
+  }
+  X.globalAlpha = 1;
+  // Crystalline diamond body - icy blue/white gradient
+  const grd = X.createLinearGradient(-w/2, -h/2, w/2, h/2);
+  grd.addColorStop(0, '#88ccff'); grd.addColorStop(0.5, '#cceeff'); grd.addColorStop(1, '#66aaee');
+  X.fillStyle = grd;
+  X.beginPath();
+  X.moveTo(w/2 + 5, 0);
+  X.lineTo(0, -h/2);
+  X.lineTo(-w/2, -h/4);
+  X.lineTo(-w/2 + 4, 0);
+  X.lineTo(-w/2, h/4);
+  X.lineTo(0, h/2);
+  X.closePath(); X.fill();
+  // Faceted highlights - overlapping translucent triangles
+  X.fillStyle = 'rgba(255,255,255,0.2)';
+  X.beginPath(); X.moveTo(w/2 + 2, 0); X.lineTo(0, -h/2 + 4); X.lineTo(-w/4, 0); X.closePath(); X.fill();
+  X.fillStyle = 'rgba(200,230,255,0.15)';
+  X.beginPath(); X.moveTo(w/4, -h/4); X.lineTo(-w/6, -h/3); X.lineTo(-w/6, 0); X.closePath(); X.fill();
+  X.fillStyle = 'rgba(255,255,255,0.1)';
+  X.beginPath(); X.moveTo(-w/4, 0); X.lineTo(-w/2 + 4, h/4); X.lineTo(0, h/3); X.closePath(); X.fill();
+  // Icy outline
+  X.strokeStyle = '#88bbee'; X.lineWidth = 1.5;
+  X.beginPath();
+  X.moveTo(w/2 + 5, 0); X.lineTo(0, -h/2); X.lineTo(-w/2, -h/4);
+  X.lineTo(-w/2 + 4, 0); X.lineTo(-w/2, h/4); X.lineTo(0, h/2);
+  X.closePath(); X.stroke();
+  // Sparkle accents
+  const sp = Math.sin(t * 3) * 0.3 + 0.7;
+  X.globalAlpha = sp;
+  X.fillStyle = '#fff';
+  X.beginPath(); X.arc(w/6, -h/6, 2, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(-w/6, h/6, 1.5, 0, Math.PI * 2); X.fill();
+  X.globalAlpha = 1;
+}
+
+function drawCubeSkin6() {
+  const h = PSIZ;
+  const t = Date.now() * 0.006;
+  // Snowflake/sparkle trail
+  for (let i = 1; i <= 5; i++) {
+    const fy = Math.sin(t * 1.5 + i * 1.8) * 5;
+    X.globalAlpha = 0.4 - i * 0.07;
+    X.fillStyle = i % 2 === 0 ? '#aaddff' : '#fff';
+    X.beginPath(); X.arc(-h/2 - i * 7, fy, 2.5 - i * 0.3, 0, Math.PI * 2); X.fill();
+  }
+  X.globalAlpha = 1;
+  // Light blue body
+  const grd = X.createLinearGradient(-h/2, -h/2, h/2, h/2);
+  grd.addColorStop(0, '#88ccff'); grd.addColorStop(1, '#66aaee');
+  X.fillStyle = grd; X.fillRect(-h/2, -h/2, h, h);
+  // White frost overlay triangles
+  X.fillStyle = 'rgba(255,255,255,0.2)';
+  X.beginPath(); X.moveTo(-h/2, -h/2); X.lineTo(h/4, -h/2); X.lineTo(-h/2, h/4); X.closePath(); X.fill();
+  X.fillStyle = 'rgba(200,230,255,0.15)';
+  X.beginPath(); X.moveTo(h/2, h/2); X.lineTo(-h/4, h/2); X.lineTo(h/2, -h/4); X.closePath(); X.fill();
+  // Icy border
+  X.strokeStyle = '#88bbee'; X.lineWidth = 2; X.strokeRect(-h/2, -h/2, h, h);
+  // Blue eye
+  X.fillStyle = '#4488cc'; X.fillRect(-3, -5, 10, 8);
+  X.fillStyle = '#cceeff'; X.fillRect(0, -3, 5, 5);
+}
+
 function drawPlayer() {
   if (P.dead) {
     particles.forEach(p => {
@@ -1333,30 +1872,25 @@ function drawPlayer() {
   X.save(); X.translate(cx, cy); X.rotate(P.rot * Math.PI / 180);
 
   if (P.ship) {
-    X.globalAlpha = 0.4; X.fillStyle = '#0f0';
-    X.fillRect(-PSIZ/2-18, -4, 20, 8);
-    X.globalAlpha = 0.2; X.fillRect(-PSIZ/2-36, -3, 20, 6);
-    X.globalAlpha = 1;
-    X.fillStyle = '#00e676';
-    X.beginPath(); X.moveTo(PSIZ/2, 0); X.lineTo(-PSIZ/2, -PSIZ/2);
-    X.lineTo(-PSIZ/2+6, 0); X.lineTo(-PSIZ/2, PSIZ/2); X.closePath(); X.fill();
-    X.fillStyle = '#69f0ae';
-    X.beginPath(); X.moveTo(PSIZ/2-8, 0); X.lineTo(-PSIZ/2+8, -PSIZ/2+8);
-    X.lineTo(-PSIZ/2+12, 0); X.lineTo(-PSIZ/2+8, PSIZ/2-8); X.closePath(); X.fill();
-    X.strokeStyle = '#1b5e20'; X.lineWidth = 2;
-    X.beginPath(); X.moveTo(PSIZ/2, 0); X.lineTo(-PSIZ/2, -PSIZ/2);
-    X.lineTo(-PSIZ/2+6, 0); X.lineTo(-PSIZ/2, PSIZ/2); X.closePath(); X.stroke();
-    X.fillStyle = '#fff'; X.fillRect(-2, -5, 10, 8);
-    X.fillStyle = '#000'; X.fillRect(2, -3, 5, 5);
+    switch (shipSkin) {
+      case 0: drawShipSkin0(); break;
+      case 1: drawShipSkin1(); break;
+      case 2: drawShipSkin2(); break;
+      case 3: drawShipSkin3(); break;
+      case 4: drawShipSkin4(); break;
+      case 5: drawShipSkin5(); break;
+      case 6: drawShipSkin6(); break;
+    }
   } else {
-    X.globalAlpha = 0.3; X.fillStyle = '#0f0';
-    X.fillRect(-PSIZ/2-12, -PSIZ/2+4, 14, PSIZ-8); X.globalAlpha = 1;
-    X.fillStyle = '#00c853'; X.fillRect(-PSIZ/2, -PSIZ/2, PSIZ, PSIZ);
-    X.fillStyle = '#00e676'; X.fillRect(-PSIZ/2+3, -PSIZ/2+3, PSIZ-6, PSIZ-6);
-    X.fillStyle = 'rgba(255,255,255,0.12)'; X.fillRect(-PSIZ/2+3, -PSIZ/2+3, PSIZ-6, (PSIZ-6)/2);
-    X.strokeStyle = '#1b5e20'; X.lineWidth = 2.5; X.strokeRect(-PSIZ/2, -PSIZ/2, PSIZ, PSIZ);
-    X.fillStyle = '#fff'; X.fillRect(-5, -6, 12, 10);
-    X.fillStyle = '#000'; X.fillRect(-1, -3, 6, 6);
+    switch (shipSkin) {
+      case 0: drawCubeSkin0(); break;
+      case 1: drawCubeSkin1(); break;
+      case 2: drawCubeSkin2(); break;
+      case 3: drawCubeSkin3(); break;
+      case 4: drawCubeSkin4(); break;
+      case 5: drawCubeSkin5(); break;
+      case 6: drawCubeSkin6(); break;
+    }
   }
   X.restore();
 }
