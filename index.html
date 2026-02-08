@@ -1202,65 +1202,64 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       case 11: { // Capybara
         const S = Math.min(PW, PH) * 0.55;
-        // Warm brown glow
+        // Thick dark brown outline blob body
         ctx.save();
-        ctx.shadowColor = '#8B6914'; ctx.shadowBlur = 14;
-        // Body: brown rounded capsule (side-view capybara)
-        ctx.fillStyle = '#8B6914';
+        ctx.shadowColor = '#4A3228'; ctx.shadowBlur = 5;
+        ctx.fillStyle = '#DEB896';
+        ctx.strokeStyle = '#4A3228'; ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(S/2 + 4, 0);
-        ctx.quadraticCurveTo(S/2 + 4, -S/3, S/6, -S/3);
-        ctx.lineTo(-S/3, -S/3);
-        ctx.quadraticCurveTo(-S/2, -S/3, -S/2, 0);
-        ctx.quadraticCurveTo(-S/2, S/3, -S/3, S/3);
+        ctx.moveTo(S/2, 0);
+        ctx.quadraticCurveTo(S/2, -S/2.5, S/6, -S/2.8);
+        ctx.quadraticCurveTo(-S/6, -S/2.5, -S/3, -S/3);
+        ctx.quadraticCurveTo(-S/2 - 4, -S/4, -S/2 - 4, 0);
+        ctx.quadraticCurveTo(-S/2 - 4, S/3, -S/3, S/3);
         ctx.lineTo(S/6, S/3);
-        ctx.quadraticCurveTo(S/2 + 4, S/3, S/2 + 4, 0);
-        ctx.closePath(); ctx.fill();
+        ctx.quadraticCurveTo(S/2, S/3, S/2, 0);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
         ctx.restore();
-        // Body highlight
-        ctx.fillStyle = '#A67B3D';
+        // Darker tan spots
+        ctx.fillStyle = '#C4A07A';
+        ctx.beginPath(); ctx.ellipse(-S/6, -S/8, 5, 3, 0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(-S/4, S/6, 4, 2.5, -0.2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, S/8, 3, 2, 0.5, 0, Math.PI * 2); ctx.fill();
+        // Stubby legs with outline
+        ctx.fillStyle = '#DEB896'; ctx.strokeStyle = '#4A3228'; ctx.lineWidth = 2.5;
         ctx.beginPath();
-        ctx.moveTo(S/4, -S/6);
-        ctx.quadraticCurveTo(S/6, -S/4, -S/6, -S/4);
-        ctx.lineTo(-S/6, -S/8);
-        ctx.lineTo(S/4, -S/8);
-        ctx.closePath(); ctx.fill();
-        // Big blocky snout at front
-        ctx.fillStyle = '#9E7620';
+        ctx.moveTo(-S/5 - 5, S/3 - 2);
+        ctx.quadraticCurveTo(-S/5 - 6, S/3 + 8, -S/5, S/3 + 8);
+        ctx.quadraticCurveTo(-S/5 + 6, S/3 + 8, -S/5 + 5, S/3 - 2);
+        ctx.fill(); ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(S/3, -S/6);
-        ctx.quadraticCurveTo(S/2 + 12, -S/6, S/2 + 12, 0);
-        ctx.quadraticCurveTo(S/2 + 12, S/5, S/3, S/5);
-        ctx.lineTo(S/3, -S/6);
+        ctx.moveTo(S/8 - 5, S/3 - 2);
+        ctx.quadraticCurveTo(S/8 - 6, S/3 + 8, S/8, S/3 + 8);
+        ctx.quadraticCurveTo(S/8 + 6, S/3 + 8, S/8 + 5, S/3 - 2);
+        ctx.fill(); ctx.stroke();
+        // Tiny ear bump
+        ctx.fillStyle = '#DEB896'; ctx.strokeStyle = '#4A3228'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(S/8, -S/2.8 - 2, 5, Math.PI, 0); ctx.fill(); ctx.stroke();
+        // Small tilted oval eye
+        ctx.fillStyle = '#2A1A10';
+        ctx.save(); ctx.translate(S/4, -S/6); ctx.rotate(-0.3);
+        ctx.beginPath(); ctx.ellipse(0, 0, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        // Rosy cheek
+        ctx.fillStyle = 'rgba(210,140,140,0.45)';
+        ctx.beginPath(); ctx.arc(S/4 + 4, -S/14, 6, 0, Math.PI * 2); ctx.fill();
+        // Orange on back with leaf
+        ctx.fillStyle = '#D06030';
+        ctx.beginPath(); ctx.arc(-S/10, -S/2.8 - 4, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#E08040';
+        ctx.beginPath(); ctx.arc(-S/10, -S/2.8 - 5, 5.5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#5A8030';
+        ctx.beginPath();
+        ctx.moveTo(-S/10, -S/2.8 - 11);
+        ctx.quadraticCurveTo(-S/10 + 6, -S/2.8 - 14, -S/10 + 3, -S/2.8 - 8);
         ctx.closePath(); ctx.fill();
-        // Wide flat nose with two nostrils
-        ctx.fillStyle = '#4a3a1a';
-        ctx.beginPath(); ctx.ellipse(S/2 + 8, -S/12, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(S/2 + 8, S/12, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
-        // Small round ear on top (side view)
-        ctx.fillStyle = '#7a5a10';
-        ctx.beginPath(); ctx.arc(S/8, -S/3 - 4, 5, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#d4a574';
-        ctx.beginPath(); ctx.arc(S/8, -S/3 - 4, 3, 0, Math.PI * 2); ctx.fill();
-        // Small beady eye set high
-        ctx.fillStyle = '#1a1a1a';
-        ctx.beginPath(); ctx.arc(S/4, -S/5, 4.5, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.beginPath(); ctx.arc(S/4 + 1.5, -S/5 - 1.5, 1.8, 0, Math.PI * 2); ctx.fill();
-        // Whiskers
-        ctx.strokeStyle = '#5a4a2a'; ctx.lineWidth = 0.8;
-        ctx.beginPath(); ctx.moveTo(S/2 + 4, 0); ctx.lineTo(S/2 + 16, -S/6); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(S/2 + 4, 3); ctx.lineTo(S/2 + 17, 3); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(S/2 + 4, 6); ctx.lineTo(S/2 + 16, S/5); ctx.stroke();
-        // Two small leg stubs at bottom
-        ctx.fillStyle = '#6b5210';
-        ctx.fillRect(-S/6, S/3 - 2, 10, 8);
-        ctx.fillRect(S/8, S/3 - 2, 10, 8);
         // "C" on body
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold ' + Math.floor(S * 0.35) + 'px Arial';
+        ctx.fillStyle = '#4A3228';
+        ctx.font = 'bold ' + Math.floor(S * 0.25) + 'px Arial';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('C', -S/10, 4);
+        ctx.fillText('C', -S/6, 4);
         break;
       }
     }
@@ -1794,30 +1793,30 @@ document.addEventListener('DOMContentLoaded', function() {
         break;
       }
       case 11: { // Capybara mini
-        // Mini brown rounded body
-        bctx.fillStyle = '#8B6914';
+        // Blobby tan body with dark outline
+        bctx.fillStyle = '#DEB896';
+        bctx.strokeStyle = '#4A3228'; bctx.lineWidth = 1.5;
         bctx.beginPath();
         bctx.moveTo(S/3, 0);
-        bctx.quadraticCurveTo(S/3, -S/4, 0, -S/4);
-        bctx.quadraticCurveTo(-S/3, -S/4, -S/3, 0);
+        bctx.quadraticCurveTo(S/3, -S/3, 0, -S/3);
+        bctx.quadraticCurveTo(-S/3, -S/3, -S/3, 0);
         bctx.quadraticCurveTo(-S/3, S/4, 0, S/4);
         bctx.quadraticCurveTo(S/3, S/4, S/3, 0);
-        bctx.closePath(); bctx.fill();
-        // Blocky snout
-        bctx.fillStyle = '#9E7620';
-        bctx.beginPath();
-        bctx.moveTo(S/6, -S/10);
-        bctx.quadraticCurveTo(S/3 + 2, -S/10, S/3 + 2, 0);
-        bctx.quadraticCurveTo(S/3 + 2, S/10, S/6, S/10);
-        bctx.closePath(); bctx.fill();
-        // Small round ear
-        bctx.fillStyle = '#7a5a10';
-        bctx.beginPath(); bctx.arc(0, -S/4 - 1, 2.5, 0, Math.PI * 2); bctx.fill();
-        // Beady eye
-        bctx.fillStyle = '#1a1a1a';
-        bctx.beginPath(); bctx.arc(S/10, -S/8, 1.5, 0, Math.PI * 2); bctx.fill();
-        // Nostril
-        bctx.beginPath(); bctx.arc(S/4 + 1, 0, 1, 0, Math.PI * 2); bctx.fill();
+        bctx.closePath(); bctx.fill(); bctx.stroke();
+        // Tiny ear bump
+        bctx.fillStyle = '#DEB896';
+        bctx.beginPath(); bctx.arc(S/10, -S/3, 2, Math.PI, 0); bctx.fill(); bctx.stroke();
+        // Tilted oval eye
+        bctx.fillStyle = '#2A1A10';
+        bctx.save(); bctx.translate(S/8, -S/8); bctx.rotate(-0.3);
+        bctx.beginPath(); bctx.ellipse(0, 0, 1.5, 1, 0, 0, Math.PI * 2); bctx.fill();
+        bctx.restore();
+        // Rosy cheek
+        bctx.fillStyle = 'rgba(210,140,140,0.4)';
+        bctx.beginPath(); bctx.arc(S/6, 0, 2.5, 0, Math.PI * 2); bctx.fill();
+        // Mini orange
+        bctx.fillStyle = '#E08040';
+        bctx.beginPath(); bctx.arc(-S/10, -S/3 - 1, 2.5, 0, Math.PI * 2); bctx.fill();
         break;
       }
     }
