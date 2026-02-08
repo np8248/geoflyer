@@ -72,6 +72,16 @@ canvas{display:block;touch-action:none}
 <div class="scr" id="deathS">
   <h2>YOU CRASHED!</h2>
   <p id="deathP"></p>
+  <p id="deathRank" style="display:none;color:#0af;font-size:16px;margin-top:8px;"></p>
+  <div id="deathUsername" style="display:none;margin-top:10px;text-align:center;">
+    <p style="color:#8af;font-size:14px;margin-bottom:6px;">Enter a name for the leaderboard:</p>
+    <div style="display:flex;gap:8px;justify-content:center;align-items:center;">
+      <input id="deathUsernameInput" type="text" maxlength="20" placeholder="Username..."
+        style="background:rgba(10,10,40,0.85);border:2px solid #2a2a60;border-radius:8px;color:#fff;font-size:14px;padding:6px 12px;width:160px;font-family:'Arial',sans-serif;outline:none;"
+        onfocus="this.style.borderColor='#0af'" onblur="this.style.borderColor='#2a2a60'">
+      <button onclick="saveDeathUsername()" style="background:rgba(0,170,255,0.12);border:2px solid #0af;border-radius:8px;color:#0af;font-size:13px;padding:6px 14px;cursor:pointer;font-family:'Arial',sans-serif;pointer-events:auto;">Submit</button>
+    </div>
+  </div>
   <div class="death-btns">
     <button class="death-btn retry-btn" onclick="onInput()">&#9654; Play Again</button>
     <button class="death-btn menu-btn" onclick="window.location.href='index.html'">&#9664; Menu</button>
@@ -344,6 +354,36 @@ let ceilBumpX = 0; // next tile x for ceiling bump generation
 let coinGenX = 30; // next tile x for coin line generation
 let highScore = 0;
 try { highScore = parseInt(localStorage.getItem('endless-high') || '0'); } catch(e) {}
+
+let pendingDeathScore = 0; // stored for deathUsername flow
+
+async function submitScore(name, score) {
+  try {
+    const res = await fetch('/api/leaderboard', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, score: Math.floor(score)})
+    });
+    const data = await res.json();
+    if (data.rank) {
+      document.getElementById('deathRank').textContent = '#' + data.rank + ' on leaderboard!';
+      document.getElementById('deathRank').style.display = 'block';
+    }
+  } catch(e) { /* silently fail — game still works offline */ }
+}
+
+function saveDeathUsername() {
+  const input = document.getElementById('deathUsernameInput');
+  const val = input.value.trim();
+  if (val.length < 1 || val.length > 20 || !/^[a-zA-Z0-9 ]+$/.test(val)) {
+    input.style.borderColor = '#f44';
+    setTimeout(() => { input.style.borderColor = '#2a2a60'; }, 1500);
+    return;
+  }
+  localStorage.setItem('geoflyer-username', val);
+  document.getElementById('deathUsername').style.display = 'none';
+  submitScore(val, pendingDeathScore);
+}
 
 // Ceiling occupies rows 0-2; floor obstacles must leave at least 4 rows of gap below row 3
 const MAX_FLOOR_H = G - 3 - 4; // = 4 for G=11
@@ -1060,6 +1100,18 @@ function kill() {
     h2.style.color = isNewHigh ? '#ffd600' : '#f44';
     h2.style.textShadow = isNewHigh ? '0 0 20px #ffd600' : '0 0 20px #f00';
     document.getElementById('deathP').textContent = dist + 'm' + (isNewHigh ? '' : '  |  Best: ' + highScore + 'm') + '  |  Coins: ' + coinsGot;
+    // Reset leaderboard UI
+    document.getElementById('deathRank').style.display = 'none';
+    document.getElementById('deathUsername').style.display = 'none';
+    // Submit score to leaderboard
+    const username = localStorage.getItem('geoflyer-username');
+    if (isNewHigh && username) {
+      submitScore(username, dist);
+    } else if (isNewHigh && !username) {
+      pendingDeathScore = dist;
+      document.getElementById('deathUsername').style.display = 'block';
+      document.getElementById('deathUsernameInput').value = '';
+    }
     show('deathS');
     setTimeout(() => { canRestart = true; }, 600);
   }, 600);

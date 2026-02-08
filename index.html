@@ -143,6 +143,17 @@ h2 {
   background: rgba(10, 10, 30, 0.95);
 }
 #trailOverlay.open { display: flex; }
+#lbOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 100;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(10, 10, 30, 0.95);
+}
+#lbOverlay.open { display: flex; }
 
 .skin-picker {
   display: flex;
@@ -256,6 +267,9 @@ h2 {
   .skin-close-x { font-size: 36px; padding: 10px; top: 12px; right: 16px; }
   .skin-back { padding: 12px 36px; min-height: 44px; }
   #achList { max-width: 90vw !important; }
+  #usernameInput { width: 140px !important; font-size: 13px !important; }
+  #lbList { max-width: 90vw !important; }
+  .lb-row { font-size: 13px !important; padding: 6px 10px !important; }
 }
 
 </style>
@@ -291,6 +305,19 @@ h2 {
   </div>
 
   <div id="menuCoins" style="margin-top:6px;color:#ffd600;font-size:14px;text-shadow:0 0 8px #ffd600;">&#9733; 0 coins</div>
+
+  <div id="usernameRow" style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+    <input id="usernameInput" type="text" maxlength="20" placeholder="Enter username..." value=""
+      style="background:rgba(10,10,40,0.85);border:2px solid #2a2a60;border-radius:8px;color:#fff;font-size:14px;padding:6px 12px;width:180px;font-family:'Arial',sans-serif;outline:none;transition:border-color 0.2s;"
+      onfocus="this.style.borderColor='#0af'" onblur="this.style.borderColor='#2a2a60'">
+    <button id="usernameSave" style="background:rgba(0,170,255,0.12);border:2px solid #0af;border-radius:8px;color:#0af;font-size:13px;padding:6px 14px;cursor:pointer;font-family:'Arial',sans-serif;transition:all 0.15s;"
+      onmouseover="this.style.background='rgba(0,170,255,0.25)'" onmouseout="this.style.background='rgba(0,170,255,0.12)'">Save</button>
+  </div>
+
+  <div class="mode-card" style="width:200px;padding:12px 20px;flex-direction:row;gap:10px;margin-top:4px;" onclick="openLeaderboard()">
+    <span style="font-size:24px;">&#127941;</span>
+    <h3 style="font-size:18px;">Leaderboard</h3>
+  </div>
 
   <div style="margin-top:12px;display:flex;gap:12px;align-items:center;">
     <button style="background:rgba(255,50,50,0.12);border:1px solid #c33;border-radius:6px;color:#f66;font-size:12px;padding:8px 16px;cursor:pointer;font-family:'Arial',sans-serif;" onclick="if(confirm('Reset ALL progress? Coins, skins, achievements, trails, and high score will be lost.')){localStorage.removeItem('geoflyer-coins');localStorage.removeItem('geoflyer-unlocked');localStorage.removeItem('geoflyer-achievements');localStorage.removeItem('geoflyer-unlocked-trails');localStorage.removeItem('geoflyer-skin');localStorage.removeItem('geoflyer-trail');localStorage.removeItem('geoflyer-streak-skin');localStorage.removeItem('geoflyer-streak-count');localStorage.removeItem('endless-high');location.reload();}">Reset Progress</button>
@@ -414,6 +441,66 @@ draw();
   <div id="trailDots" style="display:flex;gap:6px;margin-top:10px;justify-content:center;align-items:center;"></div>
   <button class="skin-back" onclick="document.getElementById('trailOverlay').classList.remove('open')" style="margin-top:20px;">Back</button>
 </div>
+
+<div id="lbOverlay">
+  <button class="skin-close-x" onclick="closeLB()">&times;</button>
+  <div style="color:#fff;font-size:28px;font-weight:bold;text-shadow:0 0 20px rgba(0,0,0,0.5);margin-bottom:20px;">Leaderboard</div>
+  <div id="lbList" style="display:flex;flex-direction:column;gap:4px;max-width:420px;width:90%;max-height:60vh;overflow-y:auto;"></div>
+  <button class="skin-back" onclick="closeLB()" style="margin-top:24px;">Back</button>
+</div>
+
+<script>
+// Leaderboard + Username logic (global scope)
+function openLeaderboard() {
+  document.getElementById('lbOverlay').classList.add('open');
+  const list = document.getElementById('lbList');
+  list.innerHTML = '<div style="color:#8899bb;font-size:14px;text-align:center;padding:20px;">Loading...</div>';
+  fetch('/api/leaderboard')
+    .then(r => r.json())
+    .then(data => {
+      const scores = data.scores || [];
+      if (scores.length === 0) {
+        list.innerHTML = '<div style="color:#8899bb;font-size:14px;text-align:center;padding:20px;">No scores yet. Be the first!</div>';
+        return;
+      }
+      const username = (localStorage.getItem('geoflyer-username') || '').toLowerCase();
+      list.innerHTML = scores.map((s, i) => {
+        const isMe = username && s.name.toLowerCase() === username;
+        const bg = isMe ? 'rgba(0,170,255,0.15)' : (i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent');
+        const border = isMe ? 'border:1px solid rgba(0,170,255,0.3);' : '';
+        const medal = i === 0 ? '\u{1F947}' : i === 1 ? '\u{1F948}' : i === 2 ? '\u{1F949}' : '';
+        return '<div class="lb-row" style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-radius:8px;background:'+bg+';'+border+'">' +
+          '<span style="color:#8899bb;font-size:14px;min-width:36px;">' + (medal || '#'+(i+1)) + '</span>' +
+          '<span style="color:'+(isMe?'#0af':'#fff')+';font-size:15px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(s.name) + '</span>' +
+          '<span style="color:#0f0;font-size:15px;font-weight:bold;text-shadow:0 0 6px #0f0;">' + s.score + 'm</span>' +
+        '</div>';
+      }).join('');
+    })
+    .catch(() => {
+      list.innerHTML = '<div style="color:#f66;font-size:14px;text-align:center;padding:20px;">Could not load leaderboard</div>';
+    });
+}
+function closeLB() { document.getElementById('lbOverlay').classList.remove('open'); }
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// Username save
+document.addEventListener('DOMContentLoaded', function() {
+  const saved = localStorage.getItem('geoflyer-username') || '';
+  document.getElementById('usernameInput').value = saved;
+  document.getElementById('usernameSave').addEventListener('click', function() {
+    const input = document.getElementById('usernameInput');
+    const val = input.value.trim();
+    if (val.length < 1 || val.length > 20 || !/^[a-zA-Z0-9 ]+$/.test(val)) {
+      input.style.borderColor = '#f44';
+      setTimeout(() => { input.style.borderColor = '#2a2a60'; }, 1500);
+      return;
+    }
+    localStorage.setItem('geoflyer-username', val);
+    input.style.borderColor = '#0f0';
+    setTimeout(() => { input.style.borderColor = '#2a2a60'; }, 1500);
+  });
+});
+</script>
 
 <script>
 (function() {
