@@ -2681,12 +2681,13 @@ function drawPlayer() {
         X.restore();
       }
     } else if (trailStyle === 5) { // Snow — snowflake crystals
-      for (let i = 0; i < 10; i++) {
-        const seed = i * 73.7;
-        const age = (t * 0.6 + seed) % 3.5;
-        const fx = -h/2 - 6 - age * 14;
-        const fy = Math.sin(seed) * 4 + age * age * 1.5;
-        const sz = 4 - age * 0.6;
+      for (let i = 0; i < 12; i++) {
+        const phase = i / 12;  // evenly spaced 0..1
+        const age = (t * 0.5 + phase * 4) % 4;
+        const seed = i * 73.7; // just for visual variation
+        const fx = -h/2 - 6 - age * 12;
+        const fy = Math.sin(seed + t * 0.3) * 5 + age * 1.2;
+        const sz = 4 - age * 0.5;
         const spin = t * 1.5 + seed;
         X.globalAlpha = Math.max(0, 0.75 - age * 0.18);
         X.strokeStyle = i % 3 === 0 ? '#ffffff' : (i % 3 === 1 ? '#cceeff' : '#aaddff');

@@ -1302,11 +1302,12 @@ draw();
     } else if (activeTrail === 5) {
       // Snow — snowflake crystals
       for (let i = 0; i < 14; i++) {
+        const phase = i / 14;  // evenly spaced
+        const age = (t * 0.5 + phase * 4) % 4;
         const seed = i * 73.7;
-        const age = (t * 0.6 + seed) % 3.5;
-        const fx = w - 30 - age * 25;
-        const fy = h/2 + Math.sin(seed) * 8 + age * age * 2;
-        const sz = 7 - age * 1;
+        const fx = w - 30 - age * 22;
+        const fy = h/2 + Math.sin(seed + t * 0.3) * 10 + age * 2;
+        const sz = 7 - age * 0.8;
         const spin = t * 1.5 + seed;
         trailCtx.globalAlpha = Math.max(0, 0.75 - age * 0.18);
         trailCtx.strokeStyle = i % 3 === 0 ? '#ffffff' : (i % 3 === 1 ? '#cceeff' : '#aaddff');
