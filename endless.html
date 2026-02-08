@@ -359,6 +359,21 @@ try { highScore = parseInt(localStorage.getItem('endless-high') || '0'); } catch
 
 let pendingDeathScore = 0; // stored for deathUsername flow
 
+// Retroactive check: if player is already #1 on load, grant Champion rewards
+(async function checkLeaderboardUnlock() {
+  try {
+    const username = localStorage.getItem('geoflyer-username');
+    if (!username || hasAchievement('leaderboard-1')) return;
+    const res = await fetch('/api/leaderboard');
+    const data = await res.json();
+    if (data.scores && data.scores.length > 0 && data.scores[0].name.toLowerCase() === username.trim().toLowerCase()) {
+      grantAchievement('leaderboard-1');
+      const trails = getUnlockedTrails();
+      if (!trails.includes(8)) { trails.push(8); localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify(trails)); }
+    }
+  } catch(e) {}
+})();
+
 async function submitScore(name, score) {
   try {
     const res = await fetch('/api/leaderboard', {
