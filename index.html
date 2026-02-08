@@ -1145,12 +1145,13 @@ draw();
 
   // Achievements list
   const ACHIEVEMENTS = [
-    { id: 'survive-500m', name: 'Hot Streak', desc: 'Survive 500 meters', reward: 'Unlocks Fire trail' },
+    { id: 'die-invincible', name: 'Ironic Death', desc: 'Die while invincible power-up is active', reward: 'Unlocks Fire trail' },
     { id: 'survive-1000m', name: 'Marathon Flyer', desc: 'Survive 1000 meters', reward: 'Unlocks Shooting Star skin' },
     { id: 'survive-2000m', name: 'Blizzard Runner', desc: 'Survive 2000 meters', reward: 'Unlocks Snow trail' },
     { id: 'collect-25-run', name: 'Sweet Tooth', desc: 'Collect 25 coins in one run', reward: 'Unlocks Candy trail' },
     { id: 'collect-100', name: 'Coin Hoarder', desc: 'Collect 100 coins in one run', reward: 'Unlocks Rainbow trail' },
-    { id: 'loyal-10', name: 'Loyal Flyer', desc: 'Play same skin 10 games in a row (300m+ each)', reward: 'Unlocks Skin Echo trail' }
+    { id: 'loyal-10', name: 'Loyal Flyer', desc: 'Play same skin 10 games in a row (300m+ each)', reward: 'Unlocks Skin Echo trail' },
+    { id: 'bamboozled-3', name: 'Bamboozle Survivor', desc: 'Get bamboozled 3 times in one run', reward: 'Unlocks Laser trail' }
   ];
   function populateAchievements() {
     const list = document.getElementById('achList');
@@ -1189,7 +1190,7 @@ draw();
   achObs.observe(document.getElementById('achOverlay'), { attributes: true, attributeFilter: ['class'] });
 
   // Trail selector
-  const TRAIL_NAMES = ['None','Smoke','Fire','Rainbow','Candy','Snow','Skin Echo'];
+  const TRAIL_NAMES = ['None','Smoke','Fire','Rainbow','Candy','Snow','Skin Echo','Laser'];
   const TRAIL_COLORS = [
     null,
     ['#888888','#777777','#666666','#555555'],
@@ -1197,15 +1198,17 @@ draw();
     ['#ff0000','#ff8800','#ffff00','#33ff33','#0099ff','#6633ff'],
     ['#ff44aa','#ff88cc','#88ddff','#ffee44'],
     ['#aaddff','#cceeff','#ffffff','#ddeeff'],
+    null,
     null
   ];
   const FREE_TRAILS = [0, 1];
   const TRAIL_ACHIEVEMENTS = {
-    2: {achId: 'survive-500m', desc: 'Survive 500 meters'},
+    2: {achId: 'die-invincible', desc: 'Die while invincible power-up is active'},
     3: {achId: 'collect-100', desc: 'Collect 100 coins in one run'},
     4: {achId: 'collect-25-run', desc: 'Collect 25 coins in one run'},
     5: {achId: 'survive-2000m', desc: 'Survive 2000 meters'},
-    6: {achId: 'loyal-10', desc: 'Play same skin 10 games (300m+ each)'}
+    6: {achId: 'loyal-10', desc: 'Play same skin 10 games (300m+ each)'},
+    7: {achId: 'bamboozled-3', desc: 'Get bamboozled 3 times in one run'}
   };
   function getUnlockedTrails() {
     try { return JSON.parse(localStorage.getItem('geoflyer-unlocked-trails') || '[0,1]'); }
@@ -1335,6 +1338,33 @@ draw();
       trailCtx.font = '13px Arial';
       trailCtx.textAlign = 'center';
       trailCtx.fillText('Drops mini copies of your skin', w/2, h/2 + 5);
+    } else if (activeTrail === 7) {
+      // Laser — animated wavy neon line
+      trailCtx.save();
+      trailCtx.strokeStyle = '#0ff';
+      trailCtx.shadowColor = '#0ff';
+      trailCtx.shadowBlur = 12;
+      trailCtx.lineWidth = 3;
+      trailCtx.beginPath();
+      for (let i = 0; i <= 40; i++) {
+        const lx = 10 + i * (w - 20) / 40;
+        const ly = h/2 + Math.sin(t * 2 + i * 0.3) * 12;
+        if (i === 0) trailCtx.moveTo(lx, ly); else trailCtx.lineTo(lx, ly);
+      }
+      trailCtx.stroke();
+      // Bright white tip at end
+      trailCtx.strokeStyle = '#fff';
+      trailCtx.shadowColor = '#fff';
+      trailCtx.shadowBlur = 16;
+      trailCtx.lineWidth = 2;
+      trailCtx.beginPath();
+      for (let i = 35; i <= 40; i++) {
+        const lx = 10 + i * (w - 20) / 40;
+        const ly = h/2 + Math.sin(t * 2 + i * 0.3) * 12;
+        if (i === 35) trailCtx.moveTo(lx, ly); else trailCtx.lineTo(lx, ly);
+      }
+      trailCtx.stroke();
+      trailCtx.restore();
     }
 
     // Lock overlay for locked trails
