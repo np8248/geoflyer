@@ -504,11 +504,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 (function() {
-  const SKIN_NAMES = ['Sci-fi', 'Neon Racer', 'Classic', 'Space Shuttle', 'Phoenix', 'Pirate Ship', 'Ice Crystal', 'Seagull', 'Dolphin', 'Shooting Star', 'Champion', 'Capybara'];
+  const SKIN_NAMES = ['Sci-fi', 'Neon Racer', 'Classic', 'Space Shuttle', 'Phoenix', 'Pirate Ship', 'Ice Crystal', 'Seagull', 'Dolphin', 'Shooting Star', 'Champion', 'Capybara', 'Curry'];
   // Display order: Classic, Rocket, Sci-Fi, Neon, Seagull, Phoenix, Pirate Ship, Ice Crystal, Dolphin, Shooting Star, Champion
-  const SKIN_ORDER = [2, 3, 0, 1, 7, 4, 5, 6, 8, 9, 10, 11];
+  const SKIN_ORDER = [2, 3, 0, 1, 7, 4, 5, 6, 8, 9, 10, 11, 12];
   // Full-screen overlay backgrounds per skin (saturated like GD)
-  const SKIN_BG = ['#0c1a3a', '#2e0a4a', '#0a3020', '#0c1020', '#3a1a00', '#1a0e00', '#0a1a2e', '#0a2a3a', '#0a1a30', '#1a0a30', '#2a1a00', '#2a1a08'];
+  const SKIN_BG = ['#0c1a3a', '#2e0a4a', '#0a3020', '#0c1020', '#3a1a00', '#1a0e00', '#0a1a2e', '#0a2a3a', '#0a1a30', '#1a0a30', '#2a1a00', '#2a1a08', '#3a2200'];
   const PW = 240, PH = 190;
   let activeSkin = parseInt(localStorage.getItem('geoflyer-skin') || '0');
   // Convert stored internal index to display position
@@ -519,7 +519,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const FREE_SKINS = [0,1,2,3];
   const SKIN_COSTS = {4:50, 5:100, 6:150, 7:200, 8:250};
   // Achievement-locked skins (no coin cost)
-  const ACHIEVEMENT_SKINS = {9: {achId: 'survive-1000m', desc: 'Survive 1000 meters'}, 10: {achId: 'leaderboard-1', desc: 'Reach #1 on the leaderboard'}, 11: {achId: 'owner-grant', desc: 'Granted by the owner'}};
+  const ACHIEVEMENT_SKINS = {9: {achId: 'survive-1000m', desc: 'Survive 1000 meters'}, 10: {achId: 'leaderboard-1', desc: 'Reach #1 on the leaderboard'}, 11: {achId: 'owner-grant', desc: 'Granted by the owner'}, 12: {achId: 'owner-grant', desc: 'Granted by the owner'}};
   function getAchievements() {
     try { return JSON.parse(localStorage.getItem('geoflyer-achievements') || '{}'); }
     catch(e) { return {}; }
@@ -529,11 +529,11 @@ document.addEventListener('DOMContentLoaded', function() {
   (function() {
     const u = (localStorage.getItem('geoflyer-username') || '').trim().toLowerCase();
     if (u === 'np8248') {
-      localStorage.setItem('geoflyer-unlocked', JSON.stringify([0,1,2,3,4,5,6,7,8,9,10,11]));
+      localStorage.setItem('geoflyer-unlocked', JSON.stringify([0,1,2,3,4,5,6,7,8,9,10,11,12]));
       localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify([0,1,2,3,4,5,6,7,8]));
     }
   })();
-  // Check if player has been granted capybara skin (skin 11)
+  // Check if player has been granted owner-only skins (11=capybara, 12=curry)
   (async function checkCapybaraGrant() {
     try {
       const username = localStorage.getItem('geoflyer-username');
@@ -543,6 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (data.granted && data.granted.includes(username.trim().toLowerCase())) {
         const skins = JSON.parse(localStorage.getItem('geoflyer-unlocked') || '[0,1,2,3]');
         if (!skins.includes(11)) { skins.push(11); localStorage.setItem('geoflyer-unlocked', JSON.stringify(skins)); }
+        if (!skins.includes(12)) { skins.push(12); localStorage.setItem('geoflyer-unlocked', JSON.stringify(skins)); }
       }
     } catch(e) {}
   })();
@@ -1280,6 +1281,61 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.fillText('C', -S/6, 4);
         break;
       }
+      case 12: { // Curry
+        const S = Math.min(PW, PH) * 0.55;
+        // Bowl shape — wide rounded white/cream dish
+        ctx.save();
+        ctx.shadowColor = '#E8A020'; ctx.shadowBlur = 10;
+        ctx.fillStyle = '#F5F0E0';
+        ctx.strokeStyle = '#8B7355'; ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-S/2, -S/8);
+        ctx.quadraticCurveTo(-S/2, S/3, -S/4, S/3);
+        ctx.lineTo(S/4, S/3);
+        ctx.quadraticCurveTo(S/2, S/3, S/2, -S/8);
+        ctx.lineTo(-S/2, -S/8);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.restore();
+        // Bowl rim
+        ctx.fillStyle = '#FFF8EE';
+        ctx.strokeStyle = '#8B7355'; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(0, -S/8, S/2, S/8, 0, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+        // Curry filling (left side)
+        ctx.fillStyle = '#E8A020';
+        ctx.beginPath();
+        ctx.ellipse(-S/6, -S/8, S/4, S/10, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Rice mound (right side)
+        ctx.fillStyle = '#FAFAFA';
+        ctx.beginPath();
+        ctx.ellipse(S/6, -S/8, S/5, S/8, 0, Math.PI, 0);
+        ctx.fill();
+        ctx.fillStyle = '#F0F0F0';
+        ctx.beginPath();
+        ctx.ellipse(S/6, -S/8, S/5, S/14, 0, 0, Math.PI);
+        ctx.fill();
+        // Curry chunks
+        ctx.fillStyle = '#C07818';
+        ctx.beginPath(); ctx.arc(-S/5, -S/7, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-S/8, -S/10, 2.5, 0, Math.PI * 2); ctx.fill();
+        // Steam wisps
+        ctx.strokeStyle = 'rgba(180,180,180,0.5)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(-S/8, -S/3);
+        ctx.quadraticCurveTo(-S/8 + 4, -S/3 - S/5, -S/8 - 3, -S/3 - S/2.5);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(S/10, -S/3);
+        ctx.quadraticCurveTo(S/10 - 3, -S/3 - S/5, S/10 + 3, -S/3 - S/2.5);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, -S/3 + 3);
+        ctx.quadraticCurveTo(3, -S/3 - S/6, -1, -S/3 - S/3);
+        ctx.stroke();
+        break;
+      }
     }
     ctx.restore();
 
@@ -1844,6 +1900,48 @@ document.addEventListener('DOMContentLoaded', function() {
         // Mini orange
         bctx.fillStyle = '#E08040';
         bctx.beginPath(); bctx.arc(-S/10, -S/3 - 1, 2.5, 0, Math.PI * 2); bctx.fill();
+        break;
+      }
+      case 12: { // Curry mini
+        // Mini bowl shape
+        bctx.save();
+        bctx.shadowColor = '#E8A020'; bctx.shadowBlur = 3;
+        bctx.fillStyle = '#F5F0E0';
+        bctx.strokeStyle = '#8B7355'; bctx.lineWidth = 1.5;
+        bctx.beginPath();
+        bctx.moveTo(-S/3, -S/10);
+        bctx.quadraticCurveTo(-S/3, S/4, -S/6, S/4);
+        bctx.lineTo(S/6, S/4);
+        bctx.quadraticCurveTo(S/3, S/4, S/3, -S/10);
+        bctx.lineTo(-S/3, -S/10);
+        bctx.closePath(); bctx.fill(); bctx.stroke();
+        bctx.restore();
+        // Rim
+        bctx.fillStyle = '#FFF8EE';
+        bctx.strokeStyle = '#8B7355'; bctx.lineWidth = 1;
+        bctx.beginPath();
+        bctx.ellipse(0, -S/10, S/3, S/10, 0, 0, Math.PI * 2);
+        bctx.fill(); bctx.stroke();
+        // Curry half (left)
+        bctx.fillStyle = '#E8A020';
+        bctx.beginPath();
+        bctx.ellipse(-S/8, -S/10, S/5, S/14, 0, 0, Math.PI * 2);
+        bctx.fill();
+        // Rice half (right)
+        bctx.fillStyle = '#FAFAFA';
+        bctx.beginPath();
+        bctx.ellipse(S/8, -S/10, S/6, S/10, 0, Math.PI, 0);
+        bctx.fill();
+        // Mini steam
+        bctx.strokeStyle = 'rgba(180,180,180,0.4)'; bctx.lineWidth = 0.8; bctx.lineCap = 'round';
+        bctx.beginPath();
+        bctx.moveTo(-S/10, -S/4);
+        bctx.quadraticCurveTo(-S/10 + 1, -S/3, -S/10 - 1, -S/2.5);
+        bctx.stroke();
+        bctx.beginPath();
+        bctx.moveTo(S/10, -S/4);
+        bctx.quadraticCurveTo(S/10 - 1, -S/3, S/10 + 1, -S/2.5);
+        bctx.stroke();
         break;
       }
     }

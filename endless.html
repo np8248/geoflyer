@@ -126,8 +126,8 @@ let SHIP_MAX = 7;
 let PSIZ = T - 4;
 const G = Math.floor(GND / T);
 let shipSkin = parseInt(localStorage.getItem('geoflyer-skin') || '0');
-const SKIN_COUNT = 12;
-const SKIN_ORDER = [2, 3, 0, 1, 7, 4, 5, 6, 8, 9, 10, 11];
+const SKIN_COUNT = 13;
+const SKIN_ORDER = [2, 3, 0, 1, 7, 4, 5, 6, 8, 9, 10, 11, 12];
 let trailStyle = parseInt(localStorage.getItem('geoflyer-trail') || '0');
 const TRAIL_NAMES = ['None','Smoke','Fire','Rainbow','Candy','Snow','Skin Echo','Laser','Champion'];
 const TRAIL_COLORS = [
@@ -363,7 +363,7 @@ let pendingDeathScore = 0; // stored for deathUsername flow
 (function() {
   const u = (localStorage.getItem('geoflyer-username') || '').trim().toLowerCase();
   if (u === 'np8248') {
-    const allSkins = [0,1,2,3,4,5,6,7,8,9,10,11];
+    const allSkins = [0,1,2,3,4,5,6,7,8,9,10,11,12];
     localStorage.setItem('geoflyer-unlocked', JSON.stringify(allSkins));
     const allTrails = [0,1,2,3,4,5,6,7,8];
     localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify(allTrails));
@@ -385,7 +385,7 @@ let pendingDeathScore = 0; // stored for deathUsername flow
   } catch(e) {}
 })();
 
-// Check if player has been granted capybara skin (skin 11)
+// Check if player has been granted owner-only skins (11=capybara, 12=curry)
 (async function checkCapybaraGrant() {
   try {
     const username = localStorage.getItem('geoflyer-username');
@@ -395,6 +395,7 @@ let pendingDeathScore = 0; // stored for deathUsername flow
     if (data.granted && data.granted.includes(username.trim().toLowerCase())) {
       const skins = JSON.parse(localStorage.getItem('geoflyer-unlocked') || '[0,1,2,3]');
       if (!skins.includes(11)) { skins.push(11); localStorage.setItem('geoflyer-unlocked', JSON.stringify(skins)); }
+      if (!skins.includes(12)) { skins.push(12); localStorage.setItem('geoflyer-unlocked', JSON.stringify(skins)); }
     }
   } catch(e) {}
 })();
@@ -2980,6 +2981,118 @@ function drawCubeSkin11() {
   X.fillText('C', 0, h/3);
 }
 
+function drawShipSkin12() {
+  const w = PSIZ * 1.2, h = PSIZ;
+  // Warm orange glow
+  X.save();
+  X.shadowColor = '#E8A020'; X.shadowBlur = 8;
+  // Bowl shape — wide rounded white/cream dish
+  X.fillStyle = '#F5F0E0';
+  X.strokeStyle = '#8B7355'; X.lineWidth = 2.5;
+  X.beginPath();
+  X.moveTo(-w/2, -h/8);
+  X.quadraticCurveTo(-w/2, h/3, -w/4, h/3);
+  X.lineTo(w/4, h/3);
+  X.quadraticCurveTo(w/2, h/3, w/2, -h/8);
+  X.lineTo(-w/2, -h/8);
+  X.closePath(); X.fill(); X.stroke();
+  X.restore();
+  // Bowl rim
+  X.fillStyle = '#FFF8EE';
+  X.strokeStyle = '#8B7355'; X.lineWidth = 2;
+  X.beginPath();
+  X.ellipse(0, -h/8, w/2, h/8, 0, 0, Math.PI * 2);
+  X.fill(); X.stroke();
+  // Curry filling (left side)
+  X.fillStyle = '#E8A020';
+  X.beginPath();
+  X.ellipse(-w/6, -h/8, w/4, h/10, 0, 0, Math.PI * 2);
+  X.fill();
+  // Rice mound (right side)
+  X.fillStyle = '#FAFAFA';
+  X.beginPath();
+  X.ellipse(w/6, -h/8, w/5, h/8, 0, Math.PI, 0);
+  X.fill();
+  X.fillStyle = '#F0F0F0';
+  X.beginPath();
+  X.ellipse(w/6, -h/8, w/5, h/14, 0, 0, Math.PI);
+  X.fill();
+  // Curry details — little chunks
+  X.fillStyle = '#C07818';
+  X.beginPath(); X.arc(-w/5, -h/7, 2, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(-w/8, -h/10, 1.5, 0, Math.PI * 2); X.fill();
+  // Steam wisps
+  X.strokeStyle = 'rgba(180,180,180,0.5)'; X.lineWidth = 1.5; X.lineCap = 'round';
+  const t = typeof frameCount !== 'undefined' ? frameCount * 0.05 : 0;
+  X.beginPath();
+  X.moveTo(-w/8, -h/3);
+  X.quadraticCurveTo(-w/8 + Math.sin(t) * 3, -h/3 - h/6, -w/8 - 2, -h/3 - h/3);
+  X.stroke();
+  X.beginPath();
+  X.moveTo(w/10, -h/3);
+  X.quadraticCurveTo(w/10 + Math.sin(t + 1.5) * 3, -h/3 - h/6, w/10 + 2, -h/3 - h/3);
+  X.stroke();
+  X.beginPath();
+  X.moveTo(0, -h/3 + 2);
+  X.quadraticCurveTo(Math.sin(t + 3) * 3, -h/3 - h/5, 1, -h/3 - h/2.8);
+  X.stroke();
+}
+
+function drawCubeSkin12() {
+  const h = PSIZ;
+  // Warm glow
+  X.save();
+  X.shadowColor = '#E8A020'; X.shadowBlur = 8;
+  // Square background — dark brown
+  X.fillStyle = '#3A2200';
+  X.fillRect(-h/2, -h/2, h, h);
+  X.restore();
+  X.strokeStyle = '#8B7355'; X.lineWidth = 2.5;
+  X.strokeRect(-h/2, -h/2, h, h);
+  // Bowl shape (top-down view) — circular white bowl
+  X.fillStyle = '#F5F0E0';
+  X.strokeStyle = '#8B7355'; X.lineWidth = 2;
+  X.beginPath();
+  X.arc(0, 0, h/2.5, 0, Math.PI * 2);
+  X.fill(); X.stroke();
+  // Inner bowl rim
+  X.fillStyle = '#FFF8EE';
+  X.beginPath();
+  X.arc(0, 0, h/3, 0, Math.PI * 2);
+  X.fill();
+  // Curry half (left)
+  X.save();
+  X.beginPath();
+  X.arc(0, 0, h/3 - 1, 0, Math.PI * 2);
+  X.clip();
+  X.fillStyle = '#E8A020';
+  X.fillRect(-h/3, -h/3, h/3, h * 0.66);
+  // Curry chunks
+  X.fillStyle = '#C07818';
+  X.beginPath(); X.arc(-h/6, -h/8, 2.5, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(-h/5, h/10, 2, 0, Math.PI * 2); X.fill();
+  // Rice half (right)
+  X.fillStyle = '#FAFAFA';
+  X.fillRect(0, -h/3, h/3, h * 0.66);
+  // Rice grain texture
+  X.fillStyle = '#E8E8E8';
+  X.beginPath(); X.ellipse(h/8, -h/10, 2, 1, 0.5, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.ellipse(h/6, h/10, 2, 1, -0.3, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.ellipse(h/10, h/8, 1.5, 0.8, 0.8, 0, Math.PI * 2); X.fill();
+  X.restore();
+  // Steam wisps
+  X.strokeStyle = 'rgba(180,180,180,0.45)'; X.lineWidth = 1.2; X.lineCap = 'round';
+  const t = typeof frameCount !== 'undefined' ? frameCount * 0.05 : 0;
+  X.beginPath();
+  X.moveTo(-h/8, -h/3);
+  X.quadraticCurveTo(-h/8 + Math.sin(t) * 2, -h/3 - 4, -h/8 - 1, -h/2.2);
+  X.stroke();
+  X.beginPath();
+  X.moveTo(h/8, -h/3);
+  X.quadraticCurveTo(h/8 + Math.sin(t + 2) * 2, -h/3 - 4, h/8 + 1, -h/2.2);
+  X.stroke();
+}
+
 function drawPlayer() {
   if (P.dead) {
     particles.forEach(p => {
@@ -3166,6 +3279,7 @@ function drawPlayer() {
             case 8: drawShipSkin8(); break; case 9: drawShipSkin9(); break;
             case 10: drawShipSkin10(); break;
             case 11: drawShipSkin11(); break;
+            case 12: drawShipSkin12(); break;
           }
         } else {
           switch(shipSkin) {
@@ -3176,6 +3290,7 @@ function drawPlayer() {
             case 8: drawCubeSkin8(); break; case 9: drawCubeSkin9(); break;
             case 10: drawCubeSkin10(); break;
             case 11: drawCubeSkin11(); break;
+            case 12: drawCubeSkin12(); break;
           }
         }
         X.restore();
@@ -3230,6 +3345,7 @@ function drawPlayer() {
       case 9: drawShipSkin9(); break;
       case 10: drawShipSkin10(); break;
       case 11: drawShipSkin11(); break;
+      case 12: drawShipSkin12(); break;
     }
   } else {
     switch (shipSkin) {
@@ -3245,6 +3361,7 @@ function drawPlayer() {
       case 9: drawCubeSkin9(); break;
       case 10: drawCubeSkin10(); break;
       case 11: drawCubeSkin11(); break;
+      case 12: drawCubeSkin12(); break;
     }
   }
   X.restore();
