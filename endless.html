@@ -126,10 +126,10 @@ let SHIP_MAX = 7;
 let PSIZ = T - 4;
 const G = Math.floor(GND / T);
 let shipSkin = parseInt(localStorage.getItem('geoflyer-skin') || '0');
-const SKIN_COUNT = 10;
-const SKIN_ORDER = [2, 3, 0, 1, 7, 4, 5, 6, 8, 9];
+const SKIN_COUNT = 11;
+const SKIN_ORDER = [2, 3, 0, 1, 7, 4, 5, 6, 8, 9, 10];
 let trailStyle = parseInt(localStorage.getItem('geoflyer-trail') || '0');
-const TRAIL_NAMES = ['None','Smoke','Fire','Rainbow','Candy','Snow','Skin Echo','Laser'];
+const TRAIL_NAMES = ['None','Smoke','Fire','Rainbow','Candy','Snow','Skin Echo','Laser','Champion'];
 const TRAIL_COLORS = [
   null, // none
   ['#888888','#777777','#666666','#555555'], // smoke
@@ -138,7 +138,8 @@ const TRAIL_COLORS = [
   ['#ff44aa','#ff88cc','#88ddff','#ffee44'], // candy
   ['#aaddff','#cceeff','#ffffff','#ddeeff'], // snow
   null, // skin echo (special)
-  null  // laser (special - uses shadowBlur glow)
+  null, // laser (special - uses shadowBlur glow)
+  ['#ffd600','#ffee66','#ffffff'] // champion
 ];
 const FREE_TRAILS = [0, 1];
 function getUnlockedTrails() {
@@ -368,6 +369,12 @@ async function submitScore(name, score) {
     if (data.rank) {
       document.getElementById('deathRank').textContent = '#' + data.rank + ' on leaderboard!';
       document.getElementById('deathRank').style.display = 'block';
+      if (data.rank === 1) {
+        const skins = getUnlockedSkins();
+        if (!skins.includes(10)) { skins.push(10); localStorage.setItem('geoflyer-unlocked', JSON.stringify(skins)); }
+        const trails = getUnlockedTrails();
+        if (!trails.includes(8)) { trails.push(8); localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify(trails)); }
+      }
     }
   } catch(e) { /* silently fail — game still works offline */ }
 }
@@ -2695,6 +2702,102 @@ function drawCubeSkin9() {
   X.fillStyle = '#fff'; X.fillRect(0, -3, 5, 5);
 }
 
+function drawShipSkin10() {
+  const w = PSIZ * 1.2, h = PSIZ;
+  const t = Date.now() * 0.008;
+  // Built-in gold sparkle trail when no trail equipped
+  if (trailStyle === 0) {
+    for (let i = 1; i <= 6; i++) {
+      X.globalAlpha = 0.5 - i * 0.07;
+      X.fillStyle = i % 2 === 0 ? '#ffd600' : '#ffee66';
+      X.beginPath(); X.arc(-w/2 - i * 8, Math.sin(t * 2 + i) * 3, 2.5 - i * 0.3, 0, Math.PI * 2); X.fill();
+    }
+    X.globalAlpha = 1;
+  }
+  // Gold hull body (the "1" rotated 90° CW — vertical stroke becomes horizontal hull)
+  X.save();
+  X.shadowColor = '#ffd600'; X.shadowBlur = 14;
+  X.fillStyle = '#ffd600';
+  X.beginPath();
+  X.moveTo(w/2 + 4, 0);          // nose (front tip — the base of "1")
+  X.lineTo(w/6, -h/3);            // top-front edge
+  X.lineTo(-w/3, -h/3);           // top-rear edge
+  X.lineTo(-w/3, -h/2 - 2);      // dorsal fin top (the serif/flag of "1")
+  X.lineTo(-w/2 - 2, -h/3);      // dorsal fin back
+  X.lineTo(-w/2, -h/3);           // rear top
+  X.lineTo(-w/2, h/3);            // rear bottom
+  X.lineTo(w/6, h/3);             // bottom-front edge
+  X.closePath(); X.fill();
+  X.restore();
+  // Lighter gold overlay
+  X.fillStyle = 'rgba(255,238,102,0.35)';
+  X.beginPath();
+  X.moveTo(w/3, 0);
+  X.lineTo(0, -h/5);
+  X.lineTo(-w/4, -h/5);
+  X.lineTo(-w/4, h/5);
+  X.lineTo(0, h/5);
+  X.closePath(); X.fill();
+  // Trophy in center (cup + stem + base)
+  X.fillStyle = '#ffffff';
+  X.beginPath();
+  X.moveTo(-5, -5);   // cup top-left
+  X.lineTo(5, -5);    // cup top-right
+  X.lineTo(3, 1);     // cup bottom-right
+  X.lineTo(-3, 1);    // cup bottom-left
+  X.closePath(); X.fill();
+  X.fillRect(-1, 1, 2, 3);  // stem
+  X.fillRect(-3, 4, 6, 1.5); // base
+  // Sparkle accents
+  const sp = Math.sin(t * 3) * 0.3 + 0.7;
+  X.globalAlpha = sp;
+  X.fillStyle = '#fff';
+  X.beginPath(); X.arc(w/4, -h/6, 2, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(-w/5, h/5, 1.5, 0, Math.PI * 2); X.fill();
+  X.globalAlpha = 1;
+}
+
+function drawCubeSkin10() {
+  const h = PSIZ;
+  const t = Date.now() * 0.008;
+  // Built-in gold sparkle trail when no trail equipped
+  if (trailStyle === 0) {
+    for (let i = 1; i <= 6; i++) {
+      X.globalAlpha = 0.5 - i * 0.07;
+      X.fillStyle = i % 2 === 0 ? '#ffd600' : '#ffee66';
+      X.fillRect(-h/2 - i * 7, -h/2 + 5, 6, h - 10);
+    }
+    X.globalAlpha = 1;
+  }
+  // Gold body with glow
+  X.save();
+  X.shadowColor = '#ffd600'; X.shadowBlur = 14;
+  X.fillStyle = '#ffd600'; X.fillRect(-h/2, -h/2, h, h);
+  X.restore();
+  // White glow overlay
+  X.fillStyle = 'rgba(255,238,102,0.3)'; X.fillRect(-h/2 + 3, -h/2 + 3, h - 6, h - 6);
+  // Large "1" text
+  X.fillStyle = '#fff'; X.font = 'bold ' + Math.floor(h * 0.5) + 'px Arial';
+  X.textAlign = 'center'; X.textBaseline = 'middle';
+  X.fillText('1', 0, -h/8);
+  // Small trophy below
+  X.fillStyle = '#fff';
+  X.beginPath();
+  X.moveTo(-4, h/8 - 2); X.lineTo(4, h/8 - 2); X.lineTo(3, h/8 + 2); X.lineTo(-3, h/8 + 2);
+  X.closePath(); X.fill();
+  X.fillRect(-1, h/8 + 2, 2, 2);
+  X.fillRect(-3, h/8 + 4, 6, 1);
+  // Gold border
+  X.strokeStyle = '#cc9900'; X.lineWidth = 2; X.strokeRect(-h/2, -h/2, h, h);
+  // Sparkle accents
+  const sp = Math.sin(t * 3) * 0.3 + 0.7;
+  X.globalAlpha = sp;
+  X.fillStyle = '#fff';
+  X.beginPath(); X.arc(-h/4, -h/4, 2, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(h/4, h/4, 1.5, 0, Math.PI * 2); X.fill();
+  X.globalAlpha = 1;
+}
+
 function drawPlayer() {
   if (P.dead) {
     particles.forEach(p => {
@@ -2879,6 +2982,7 @@ function drawPlayer() {
             case 4: drawShipSkin4(); break; case 5: drawShipSkin5(); break;
             case 6: drawShipSkin6(); break; case 7: drawShipSkin7(); break;
             case 8: drawShipSkin8(); break; case 9: drawShipSkin9(); break;
+            case 10: drawShipSkin10(); break;
           }
         } else {
           switch(shipSkin) {
@@ -2887,7 +2991,40 @@ function drawPlayer() {
             case 4: drawCubeSkin4(); break; case 5: drawCubeSkin5(); break;
             case 6: drawCubeSkin6(); break; case 7: drawCubeSkin7(); break;
             case 8: drawCubeSkin8(); break; case 9: drawCubeSkin9(); break;
+            case 10: drawCubeSkin10(); break;
           }
+        }
+        X.restore();
+      }
+    } else if (trailStyle === 8) { // Champion — gold "1"s and trophies tumbling
+      const champColors = ['#ffd600','#ffee66','#fff','#cc9900'];
+      for (let i = 0; i < 10; i++) {
+        const seed = i * 137.5;
+        const age = (t * 0.7 + seed) % 4;
+        const fx = -h/2 - 6 - age * 18;
+        const fy = -2 + age * age * 3 + Math.sin(seed) * 4;
+        const sz = 4 - age * 0.5;
+        const spin = t * 3 + seed;
+        X.globalAlpha = Math.max(0, 0.8 - age * 0.18);
+        X.save();
+        X.translate(fx, fy);
+        X.rotate(spin);
+        X.fillStyle = champColors[i % champColors.length];
+        if (i % 2 === 0) {
+          // "1" text
+          X.font = 'bold ' + Math.max(4, Math.floor(sz * 2.5)) + 'px Arial';
+          X.textAlign = 'center'; X.textBaseline = 'middle';
+          X.fillText('1', 0, 0);
+        } else {
+          // Trophy shape (cup trapezoid + stem + base)
+          X.beginPath();
+          X.moveTo(-sz, -sz);
+          X.lineTo(sz, -sz);
+          X.lineTo(sz * 0.6, sz * 0.3);
+          X.lineTo(-sz * 0.6, sz * 0.3);
+          X.closePath(); X.fill();
+          X.fillRect(-sz * 0.15, sz * 0.3, sz * 0.3, sz * 0.4);
+          X.fillRect(-sz * 0.5, sz * 0.7, sz, sz * 0.2);
         }
         X.restore();
       }
@@ -2907,6 +3044,7 @@ function drawPlayer() {
       case 7: drawShipSkin7(); break;
       case 8: drawShipSkin8(); break;
       case 9: drawShipSkin9(); break;
+      case 10: drawShipSkin10(); break;
     }
   } else {
     switch (shipSkin) {
@@ -2920,6 +3058,7 @@ function drawPlayer() {
       case 7: drawCubeSkin7(); break;
       case 8: drawCubeSkin8(); break;
       case 9: drawCubeSkin9(); break;
+      case 10: drawCubeSkin10(); break;
     }
   }
   X.restore();

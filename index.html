@@ -504,11 +504,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 (function() {
-  const SKIN_NAMES = ['Sci-fi', 'Neon Racer', 'Classic', 'Space Shuttle', 'Phoenix', 'Pirate Ship', 'Ice Crystal', 'Seagull', 'Dolphin', 'Shooting Star'];
-  // Display order: Classic, Rocket, Sci-Fi, Neon, Seagull, Phoenix, Pirate Ship, Ice Crystal, Dolphin, Shooting Star
-  const SKIN_ORDER = [2, 3, 0, 1, 7, 4, 5, 6, 8, 9];
+  const SKIN_NAMES = ['Sci-fi', 'Neon Racer', 'Classic', 'Space Shuttle', 'Phoenix', 'Pirate Ship', 'Ice Crystal', 'Seagull', 'Dolphin', 'Shooting Star', 'Champion'];
+  // Display order: Classic, Rocket, Sci-Fi, Neon, Seagull, Phoenix, Pirate Ship, Ice Crystal, Dolphin, Shooting Star, Champion
+  const SKIN_ORDER = [2, 3, 0, 1, 7, 4, 5, 6, 8, 9, 10];
   // Full-screen overlay backgrounds per skin (saturated like GD)
-  const SKIN_BG = ['#0c1a3a', '#2e0a4a', '#0a3020', '#0c1020', '#3a1a00', '#1a0e00', '#0a1a2e', '#0a2a3a', '#0a1a30', '#1a0a30'];
+  const SKIN_BG = ['#0c1a3a', '#2e0a4a', '#0a3020', '#0c1020', '#3a1a00', '#1a0e00', '#0a1a2e', '#0a2a3a', '#0a1a30', '#1a0a30', '#2a1a00'];
   const PW = 240, PH = 190;
   let activeSkin = parseInt(localStorage.getItem('geoflyer-skin') || '0');
   // Convert stored internal index to display position
@@ -519,7 +519,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const FREE_SKINS = [0,1,2,3];
   const SKIN_COSTS = {4:50, 5:100, 6:150, 7:200, 8:250};
   // Achievement-locked skins (no coin cost)
-  const ACHIEVEMENT_SKINS = {9: {achId: 'survive-1000m', desc: 'Survive 1000 meters'}};
+  const ACHIEVEMENT_SKINS = {9: {achId: 'survive-1000m', desc: 'Survive 1000 meters'}, 10: {achId: 'leaderboard-1', desc: 'Reach #1 on the leaderboard'}};
   function getAchievements() {
     try { return JSON.parse(localStorage.getItem('geoflyer-achievements') || '{}'); }
     catch(e) { return {}; }
@@ -1133,6 +1133,52 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.globalAlpha = 1;
         break;
       }
+      case 10: { // Champion
+        const ct = now * 0.008;
+        // Gold sparkle trail
+        for (let i = 0; i < 8; i++) {
+          ctx.globalAlpha = 0.5 - i * 0.05;
+          ctx.fillStyle = i % 2 === 0 ? '#ffd600' : '#ffee66';
+          ctx.beginPath(); ctx.arc(-S/2 - i * 10, Math.sin(ct * 2 + i) * 6, 3 - i * 0.3, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        // Gold hull shape (rotated "1")
+        ctx.save();
+        ctx.shadowColor = '#ffd600'; ctx.shadowBlur = 18;
+        ctx.fillStyle = '#ffd600';
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 6, 0);
+        ctx.lineTo(S/6, -S/3);
+        ctx.lineTo(-S/3, -S/3);
+        ctx.lineTo(-S/3, -S/2 - 4);
+        ctx.lineTo(-S/2 - 4, -S/3);
+        ctx.lineTo(-S/2, -S/3);
+        ctx.lineTo(-S/2, S/3);
+        ctx.lineTo(S/6, S/3);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+        // Lighter overlay
+        ctx.fillStyle = 'rgba(255,238,102,0.35)';
+        ctx.beginPath();
+        ctx.moveTo(S/3, 0); ctx.lineTo(0, -S/5); ctx.lineTo(-S/4, -S/5);
+        ctx.lineTo(-S/4, S/5); ctx.lineTo(0, S/5);
+        ctx.closePath(); ctx.fill();
+        // Trophy in center
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(-8, -8); ctx.lineTo(8, -8); ctx.lineTo(5, 2); ctx.lineTo(-5, 2);
+        ctx.closePath(); ctx.fill();
+        ctx.fillRect(-2, 2, 4, 5);
+        ctx.fillRect(-5, 7, 10, 2);
+        // Sparkle accents
+        const csp = Math.sin(ct * 3) * 0.3 + 0.7;
+        ctx.globalAlpha = csp;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(S/4, -S/6, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-S/5, S/5, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+        break;
+      }
     }
     ctx.restore();
 
@@ -1289,7 +1335,7 @@ document.addEventListener('DOMContentLoaded', function() {
   achObs.observe(document.getElementById('achOverlay'), { attributes: true, attributeFilter: ['class'] });
 
   // Trail selector
-  const TRAIL_NAMES = ['None','Smoke','Fire','Rainbow','Candy','Snow','Skin Echo','Laser'];
+  const TRAIL_NAMES = ['None','Smoke','Fire','Rainbow','Candy','Snow','Skin Echo','Laser','Champion'];
   const TRAIL_COLORS = [
     null,
     ['#888888','#777777','#666666','#555555'],
@@ -1298,18 +1344,20 @@ document.addEventListener('DOMContentLoaded', function() {
     ['#ff44aa','#ff88cc','#88ddff','#ffee44'],
     ['#aaddff','#cceeff','#ffffff','#ddeeff'],
     null,
-    null
+    null,
+    ['#ffd600','#ffee66','#ffffff']
   ];
   const FREE_TRAILS = [0, 1];
   // Display order: None, Smoke, Candy(25 coins), Rainbow(100 coins), Skin Echo(loyal), Snow(2000m), Fire(invincible), Laser(bamboozled)
-  const TRAIL_ORDER = [0, 1, 4, 3, 6, 5, 2, 7];
+  const TRAIL_ORDER = [0, 1, 4, 3, 6, 5, 2, 7, 8];
   const TRAIL_ACHIEVEMENTS = {
     2: {achId: 'die-invincible', desc: 'Die while invincible power-up is active'},
     3: {achId: 'collect-100', desc: 'Collect 100 coins in one run'},
     4: {achId: 'collect-25-run', desc: 'Collect 25 coins in one run'},
     5: {achId: 'survive-2000m', desc: 'Survive 2000 meters'},
     6: {achId: 'loyal-10', desc: 'Play same skin 10 games (300m+ each)'},
-    7: {achId: 'bamboozled-3', desc: 'Get bamboozled 3 times in one run'}
+    7: {achId: 'bamboozled-3', desc: 'Get bamboozled 3 times in one run'},
+    8: {achId: 'leaderboard-1', desc: 'Reach #1 on the leaderboard'}
   };
   function getUnlockedTrails() {
     try { return JSON.parse(localStorage.getItem('geoflyer-unlocked-trails') || '[0,1]'); }
@@ -1468,6 +1516,37 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       trailCtx.stroke();
       trailCtx.restore();
+    } else if (activeTrail === 8) { // Champion — gold "1"s and trophies tumbling
+      const champColors = ['#ffd600','#ffee66','#fff','#cc9900'];
+      for (let i = 0; i < 10; i++) {
+        const seed = i * 137.5;
+        const age = (t * 0.7 + seed) % 4;
+        const px = w * 0.7 - age * (w * 0.15);
+        const py = h/2 - 10 + age * age * 4 + Math.sin(seed) * 8;
+        const sz = 8 - age;
+        const spin = t * 3 + seed;
+        trailCtx.globalAlpha = Math.max(0, 0.85 - age * 0.18);
+        trailCtx.save();
+        trailCtx.translate(px, py);
+        trailCtx.rotate(spin);
+        trailCtx.fillStyle = champColors[i % champColors.length];
+        if (i % 2 === 0) {
+          // "1" text
+          trailCtx.font = 'bold ' + Math.max(6, Math.floor(sz * 2)) + 'px Arial';
+          trailCtx.textAlign = 'center'; trailCtx.textBaseline = 'middle';
+          trailCtx.fillText('1', 0, 0);
+        } else {
+          // Trophy shape
+          trailCtx.beginPath();
+          trailCtx.moveTo(-sz, -sz); trailCtx.lineTo(sz, -sz);
+          trailCtx.lineTo(sz * 0.6, sz * 0.3); trailCtx.lineTo(-sz * 0.6, sz * 0.3);
+          trailCtx.closePath(); trailCtx.fill();
+          trailCtx.fillRect(-sz * 0.15, sz * 0.3, sz * 0.3, sz * 0.4);
+          trailCtx.fillRect(-sz * 0.5, sz * 0.7, sz, sz * 0.2);
+        }
+        trailCtx.restore();
+      }
+      trailCtx.globalAlpha = 1;
     }
 
     // Lock overlay for locked trails
@@ -1613,6 +1692,23 @@ document.addEventListener('DOMContentLoaded', function() {
         bctx.closePath(); bctx.fill();
         break;
       }
+      case 10: { // Champion mini
+        bctx.save();
+        bctx.shadowColor = '#ffd600'; bctx.shadowBlur = 6;
+        bctx.fillStyle = '#ffd600';
+        bctx.beginPath();
+        bctx.moveTo(S/3, 0); bctx.lineTo(S/8, -S/4); bctx.lineTo(-S/4, -S/4);
+        bctx.lineTo(-S/4, -S/3); bctx.lineTo(-S/3, -S/4);
+        bctx.lineTo(-S/3, S/4); bctx.lineTo(S/8, S/4);
+        bctx.closePath(); bctx.fill();
+        bctx.restore();
+        // Mini trophy
+        bctx.fillStyle = '#fff';
+        bctx.fillRect(-2, -2, 4, 3);
+        bctx.fillRect(-0.5, 1, 1, 1.5);
+        bctx.fillRect(-1.5, 2.5, 3, 0.8);
+        break;
+      }
     }
     bctx.restore();
   }
@@ -1683,6 +1779,26 @@ document.addEventListener('DOMContentLoaded', function() {
         if (i === 0) bctx.moveTo(lx, ly); else bctx.lineTo(lx, ly);
       }
       bctx.stroke(); bctx.restore();
+    } else if (savedTrail === 8) {
+      const champCol = ['#ffd600','#ffee66','#fff'];
+      for (let i = 0; i < 5; i++) {
+        bctx.globalAlpha = 0.7 - i * 0.12;
+        bctx.fillStyle = champCol[i % champCol.length];
+        const px = bw - 12 - i * 10;
+        const py = bh/2 + Math.sin(t * 2 + i * 1.2) * 4;
+        if (i % 2 === 0) {
+          bctx.font = 'bold 8px Arial'; bctx.textAlign = 'center'; bctx.textBaseline = 'middle';
+          bctx.fillText('1', px, py);
+        } else {
+          bctx.beginPath();
+          bctx.moveTo(px-2, py-2); bctx.lineTo(px+2, py-2);
+          bctx.lineTo(px+1.5, py); bctx.lineTo(px-1.5, py);
+          bctx.closePath(); bctx.fill();
+          bctx.fillRect(px-0.3, py, 0.6, 1.5);
+          bctx.fillRect(px-1, py+1.5, 2, 0.5);
+        }
+      }
+      bctx.globalAlpha = 1;
     }
   }
 
