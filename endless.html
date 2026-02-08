@@ -15,17 +15,10 @@ canvas{display:block}
 #scoreTxt{position:absolute;top:10px;left:20px;color:#0f0;font-size:18px;font-weight:bold;text-shadow:0 0 8px #0f0;pointer-events:none}
 #highTxt{position:absolute;top:32px;left:20px;color:#ff0;font-size:12px;text-shadow:1px 1px 2px #000;pointer-events:none}
 #coinTxt{position:absolute;top:10px;right:100px;color:#ffd600;font-size:16px;font-weight:bold;text-shadow:0 0 8px #ffd600;pointer-events:none}
-#attempts{color:#ff0;font-size:13px;position:absolute;top:36px;text-shadow:1px 1px 2px #000}
 #pauseBtn{position:absolute;top:8px;right:12px;pointer-events:auto;cursor:pointer;color:#fff;font-size:22px;text-shadow:1px 1px 3px #000;opacity:0.7;user-select:none}
 #pauseBtn:hover{opacity:1}
-#godBtn{position:absolute;top:8px;right:50px;pointer-events:auto;cursor:pointer;color:#fff;font-size:14px;text-shadow:1px 1px 3px #000;opacity:0.7;user-select:none;padding:2px 6px;border-radius:4px}
-#godBtn:hover{opacity:1}
-#godBtn.on{color:#0f0;opacity:1;text-shadow:0 0 8px #0f0}
 #homeBtn{position:absolute;top:10px;left:50%;transform:translateX(-50%);pointer-events:auto;cursor:pointer;color:#fff;font-size:13px;text-shadow:1px 1px 3px #000;opacity:0.6;user-select:none;padding:3px 10px;border-radius:4px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);text-decoration:none;transition:all 0.15s}
 #homeBtn:hover{opacity:1;border-color:#0af;color:#0af}
-#keyDisplay{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:6px;pointer-events:none}
-#keyDisplay .key{padding:4px 10px;border-radius:4px;font-size:13px;font-family:monospace;background:rgba(255,255,255,0.1);color:#666;border:1px solid rgba(255,255,255,0.15);transition:all 0.08s}
-#keyDisplay .key.active{background:rgba(0,255,100,0.25);color:#0f0;border-color:#0f0;text-shadow:0 0 6px #0f0}
 .scr{position:absolute;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;justify-content:center;align-items:center;background:rgba(0,0,0,0.75);pointer-events:auto;cursor:pointer}
 #startS{display:flex}
 #startS h1{color:#fff;font-size:40px;text-shadow:0 0 20px #0af,0 0 40px #07f;margin-bottom:8px}
@@ -41,19 +34,6 @@ canvas{display:block}
 .menu-btn:hover{background:rgba(0,170,255,0.25);transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,170,255,0.3)}
 #winS h2{color:#0f0;font-size:34px;text-shadow:0 0 20px #0f0;margin-bottom:12px}
 #pauseS h2{color:#fff;font-size:34px;text-shadow:0 0 20px #0af;margin-bottom:12px}
-#sidebar{position:fixed;top:0;right:0;width:220px;height:100vh;background:rgba(10,10,30,0.92);border-left:1px solid #2a2a50;padding:12px;overflow-y:auto;z-index:200;display:flex;flex-direction:column;gap:10px;transform:translateX(100%);transition:transform 0.25s}
-#sidebar.open{transform:translateX(0)}
-#sidebar h3{color:#0af;font-size:14px;margin:0;text-shadow:0 0 6px #0af}
-#sidebar .divider{height:1px;background:#2a2a50;margin:2px 0}
-.ctrl-row{display:flex;flex-direction:column;gap:2px}
-.ctrl-row label{color:#aaa;font-size:11px;display:flex;justify-content:space-between;align-items:center}
-.ctrl-row label span{color:#0f0;font-family:monospace;font-size:12px}
-.ctrl-row input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:#1a1a40;outline:none}
-.ctrl-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#0af;cursor:pointer}
-#sidebarToggle{position:fixed;top:50%;right:0;transform:translateY(-50%);z-index:201;background:rgba(10,10,30,0.85);border:1px solid #2a2a50;border-right:none;color:#0af;font-size:16px;padding:8px 5px;cursor:pointer;border-radius:6px 0 0 6px;transition:right 0.25s}
-#sidebarToggle.shifted{right:220px}
-#sidebar .reset-btn{background:#1a1a40;border:1px solid #2a2a50;color:#ccc;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;margin-top:4px}
-#sidebar .reset-btn:hover{background:#252560;border-color:#0af;color:#fff}
 </style>
 </head>
 <body>
@@ -62,23 +42,8 @@ canvas{display:block}
   <div id="scoreTxt">0m</div>
   <div id="highTxt">Best: 0m</div>
   <div id="coinTxt">&#9733; 0</div>
-  <div id="attempts"></div>
   <a id="homeBtn" href="index.html">&#9664; MENU</a>
-  <div id="godBtn" onclick="toggleGod()">GOD</div>
   <div id="pauseBtn" onclick="togglePause()">| |</div>
-  <div id="keyDisplay">
-    <div class="key" id="k-space">SPACE</div>
-    <div class="key" id="k-up">UP</div>
-    <div class="key" id="k-w">W</div>
-    <div class="key" id="k-p">P</div>
-    <div class="key" id="k-g">G</div>
-    <div class="key" id="k-esc">ESC</div>
-    <div class="key" id="k-r">R</div>
-    <div class="key" id="k-h">H</div>
-    <div class="key" id="k-m">M</div>
-    <div class="key" id="k-c">C</div>
-    <div class="key" id="k-mouse">MOUSE</div>
-  </div>
 </div>
 <div class="scr" id="startS" onclick="onInput()">
   <h1>GEOFLYER</h1>
@@ -104,51 +69,6 @@ canvas{display:block}
   <p>Click or press P / Escape to resume</p>
 </div>
 
-<button id="sidebarToggle" onclick="toggleSidebar()">&#9881;</button>
-<div id="sidebar">
-  <h3>Ship Controls</h3>
-  <div class="divider"></div>
-
-  <div class="ctrl-row">
-    <label>Fly Up Force <span id="v-shipUp">-0.5</span></label>
-    <input type="range" id="s-shipUp" min="-1.5" max="-0.1" step="0.05" value="-0.5">
-  </div>
-
-  <div class="ctrl-row">
-    <label>Gravity (fall) <span id="v-shipGrav">0.4</span></label>
-    <input type="range" id="s-shipGrav" min="0.1" max="1.2" step="0.05" value="0.3">
-  </div>
-
-  <div class="ctrl-row">
-    <label>Max Speed <span id="v-shipMax">7</span></label>
-    <input type="range" id="s-shipMax" min="2" max="15" step="0.5" value="7">
-  </div>
-
-  <div class="divider"></div>
-  <h3>Game Speed</h3>
-
-  <div class="ctrl-row">
-    <label>Scroll Speed <span id="v-speed">5.0</span></label>
-    <input type="range" id="s-speed" min="1" max="12" step="0.5" value="5.0">
-  </div>
-
-  <div class="divider"></div>
-  <h3>Player Size</h3>
-
-  <div class="ctrl-row">
-    <label>Size <span id="v-psiz">36</span></label>
-    <input type="range" id="s-psiz" min="16" max="50" step="2" value="36">
-  </div>
-
-  <div class="divider"></div>
-  <button class="reset-btn" onclick="resetDefaults()">Reset to Defaults</button>
-
-  <div class="divider"></div>
-  <h3>Debug</h3>
-  <div class="ctrl-row">
-    <label style="cursor:pointer">Unlock All <input type="checkbox" id="debugUnlockAll" onchange="toggleDebugUnlockAll(this.checked)" style="cursor:pointer"></label>
-  </div>
-</div>
 
 <script>
 const C = document.getElementById('game');
@@ -200,69 +120,6 @@ function getUnlockedTrails() {
 function isTrailUnlocked(idx) { return FREE_TRAILS.includes(idx) || getUnlockedTrails().includes(idx); }
 if (!isTrailUnlocked(trailStyle)) { trailStyle = 0; localStorage.setItem('geoflyer-trail', '0'); }
 
-// Sidebar
-function toggleSidebar() {
-  const sb = document.getElementById('sidebar');
-  const btn = document.getElementById('sidebarToggle');
-  sb.classList.toggle('open');
-  btn.classList.toggle('shifted');
-}
-function bindSlider(id, valId, setter) {
-  const sl = document.getElementById(id);
-  const vl = document.getElementById(valId);
-  sl.addEventListener('input', () => { const v = parseFloat(sl.value); vl.textContent = v; setter(v); });
-}
-bindSlider('s-shipUp', 'v-shipUp', v => { SHIP_UP = v; });
-bindSlider('s-shipGrav', 'v-shipGrav', v => { SHIP_GRAV = v; });
-bindSlider('s-shipMax', 'v-shipMax', v => { SHIP_MAX = v; });
-bindSlider('s-speed', 'v-speed', v => { SPEED = v; });
-bindSlider('s-psiz', 'v-psiz', v => { PSIZ = v; });
-
-function resetDefaults() {
-  SHIP_UP = -0.5; SHIP_GRAV = 0.3; SHIP_MAX = 7; SPEED = 5.0; PSIZ = 36;
-  document.getElementById('s-shipUp').value = -0.5; document.getElementById('v-shipUp').textContent = '-0.5';
-  document.getElementById('s-shipGrav').value = 0.3; document.getElementById('v-shipGrav').textContent = '0.3';
-  document.getElementById('s-shipMax').value = 7; document.getElementById('v-shipMax').textContent = '7';
-  document.getElementById('s-speed').value = 5.0; document.getElementById('v-speed').textContent = '5';
-  document.getElementById('s-psiz').value = 36; document.getElementById('v-psiz').textContent = '36';
-}
-
-function toggleDebugUnlockAll(on) {
-  if (on) {
-    sessionStorage.setItem('geoflyer-debug-backup', JSON.stringify({
-      unlocked: localStorage.getItem('geoflyer-unlocked'),
-      achievements: localStorage.getItem('geoflyer-achievements'),
-      trails: localStorage.getItem('geoflyer-unlocked-trails')
-    }));
-    sessionStorage.setItem('geoflyer-debug-active', '1');
-    const allSkins = [];
-    for (let i = 0; i < SKIN_COUNT; i++) allSkins.push(i);
-    localStorage.setItem('geoflyer-unlocked', JSON.stringify(allSkins));
-    const allAchs = {};
-    Object.keys(ACHIEVEMENTS).forEach(k => allAchs[k] = {time: Date.now()});
-    localStorage.setItem('geoflyer-achievements', JSON.stringify(allAchs));
-    const allTrails = [];
-    for (let i = 0; i < TRAIL_NAMES.length; i++) allTrails.push(i);
-    localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify(allTrails));
-  } else {
-    const raw = sessionStorage.getItem('geoflyer-debug-backup');
-    if (raw) {
-      const backup = JSON.parse(raw);
-      if (backup.unlocked) localStorage.setItem('geoflyer-unlocked', backup.unlocked);
-      else localStorage.setItem('geoflyer-unlocked', JSON.stringify([0,1,2,3]));
-      if (backup.achievements) localStorage.setItem('geoflyer-achievements', backup.achievements);
-      else localStorage.removeItem('geoflyer-achievements');
-      if (backup.trails) localStorage.setItem('geoflyer-unlocked-trails', backup.trails);
-      else localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify([0,1]));
-    }
-    sessionStorage.removeItem('geoflyer-debug-backup');
-    sessionStorage.removeItem('geoflyer-debug-active');
-  }
-}
-// Restore checkbox state on load
-if (sessionStorage.getItem('geoflyer-debug-active') === '1') {
-  document.getElementById('debugUnlockAll').checked = true;
-}
 
 // ================================================================
 // SPACING (not used in endless - kept for compat)
@@ -357,9 +214,6 @@ function onInput() {
 
 function toggleGod() {
   godMode = !godMode;
-  const btn = document.getElementById('godBtn');
-  btn.classList.toggle('on', godMode);
-  btn.textContent = godMode ? 'GOD ON' : 'GOD';
 }
 
 function forceRestart() {
@@ -385,8 +239,8 @@ function togglePause() {
 function hide(id) { document.getElementById(id).style.display = 'none'; }
 function show(id) { document.getElementById(id).style.display = 'flex'; }
 
-function keyOn(id) { document.getElementById(id).classList.add('active'); }
-function keyOff(id) { document.getElementById(id).classList.remove('active'); }
+function keyOn(id) { const el = document.getElementById(id); if (el) el.classList.add('active'); }
+function keyOff(id) { const el = document.getElementById(id); if (el) el.classList.remove('active'); }
 function keyFlash(id) { keyOn(id); setTimeout(() => keyOff(id), 150); }
 
 document.addEventListener('keydown', e => {
@@ -1131,7 +985,6 @@ function startGame() {
   speedUpFlash = 0;
   baseSpeed = SPEED;
   generateAhead(); // pre-fill screen
-  document.getElementById('attempts').textContent = 'Attempt ' + att;
   document.getElementById('highTxt').textContent = 'Best: ' + highScore + 'm';
 }
 
@@ -1150,7 +1003,8 @@ function kill() {
   // Show death screen after 600ms, allow restart after another 600ms
   setTimeout(() => {
     const dist = Math.floor(camX / T);
-    if (dist > highScore) { highScore = dist; localStorage.setItem('endless-high', highScore); }
+    const isNewHigh = dist > highScore;
+    if (isNewHigh) { highScore = dist; localStorage.setItem('endless-high', highScore); }
     // Achievement checks
     if (hasPU('invincible') && !hasAchievement('die-invincible')) grantAchievement('die-invincible');
     if (bamboozledCount >= 3 && !hasAchievement('bamboozled-3')) grantAchievement('bamboozled-3');
@@ -1173,7 +1027,11 @@ function kill() {
     localStorage.setItem('geoflyer-streak-count', streakCount);
     if (streakCount >= 10 && !hasAchievement('loyal-10')) grantAchievement('loyal-10');
     localStorage.setItem('geoflyer-coins', persistentCoins);
-    document.getElementById('deathP').textContent = 'Distance: ' + dist + 'm  |  Best: ' + highScore + 'm  |  Coins: ' + coinsGot + '  |  Total: ' + persistentCoins;
+    const h2 = document.getElementById('deathS').querySelector('h2');
+    h2.textContent = isNewHigh ? 'NEW HIGH SCORE!' : 'YOU CRASHED!';
+    h2.style.color = isNewHigh ? '#ffd600' : '#f44';
+    h2.style.textShadow = isNewHigh ? '0 0 20px #ffd600' : '0 0 20px #f00';
+    document.getElementById('deathP').textContent = dist + 'm' + (isNewHigh ? '' : '  |  Best: ' + highScore + 'm') + '  |  Coins: ' + coinsGot;
     show('deathS');
     setTimeout(() => { canRestart = true; }, 600);
   }, 600);
