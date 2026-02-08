@@ -495,6 +495,28 @@ document.addEventListener('DOMContentLoaded', function() {
       setTimeout(() => { input.style.borderColor = '#2a2a60'; }, 1500);
       return;
     }
+    // Password-protect reserved usernames
+    if (val.toLowerCase() === 'np8248') {
+      const pw = prompt('This username is protected. Enter password:');
+      if (!pw) { input.style.borderColor = '#f44'; setTimeout(() => { input.style.borderColor = '#2a2a60'; }, 1500); return; }
+      fetch('/api/verify-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: val, password: pw })
+      }).then(r => r.json()).then(data => {
+        if (data.ok) {
+          localStorage.setItem('geoflyer-username', val);
+          input.style.borderColor = '#0f0';
+        } else {
+          input.style.borderColor = '#f44';
+        }
+        setTimeout(() => { input.style.borderColor = '#2a2a60'; }, 1500);
+      }).catch(() => {
+        input.style.borderColor = '#f44';
+        setTimeout(() => { input.style.borderColor = '#2a2a60'; }, 1500);
+      });
+      return;
+    }
     localStorage.setItem('geoflyer-username', val);
     input.style.borderColor = '#0f0';
     setTimeout(() => { input.style.borderColor = '#2a2a60'; }, 1500);
