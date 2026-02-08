@@ -246,7 +246,7 @@ function keyFlash(id) { keyOn(id); setTimeout(() => keyOff(id), 150); }
 document.addEventListener('keydown', e => {
   if (e.code === 'Escape') { keyFlash('k-esc'); e.preventDefault(); togglePause(); return; }
   if (e.key === 'p' || e.key === 'P') { keyFlash('k-p'); e.preventDefault(); togglePause(); return; }
-  if (e.key === 'g' || e.key === 'G') { keyFlash('k-g'); toggleGod(); return; }
+  if (e.key === 'g' || e.key === 'G') { const u = (localStorage.getItem('geoflyer-username') || '').trim().toLowerCase(); if (u === 'harry') return; keyFlash('k-g'); toggleGod(); return; }
   if (e.key === 'm' || e.key === 'M') { keyFlash('k-m'); window.location.href = 'index.html'; return; }
   if (e.code === 'Space') { keyOn('k-space'); e.preventDefault(); inputDown = true; holdJump = true; inputTap = true; onInput(); }
   if (e.code === 'ArrowUp') { keyOn('k-up'); e.preventDefault(); inputDown = true; holdJump = true; inputTap = true; onInput(); }

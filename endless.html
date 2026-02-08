@@ -276,7 +276,7 @@ function keyFlash(id) { keyOn(id); setTimeout(() => keyOff(id), 150); }
 document.addEventListener('keydown', e => {
   if (e.code === 'Escape') { keyFlash('k-esc'); e.preventDefault(); togglePause(); return; }
   if (e.key === 'p' || e.key === 'P') { keyFlash('k-p'); e.preventDefault(); togglePause(); return; }
-  if (e.key === 'g' || e.key === 'G') { keyFlash('k-g'); toggleGod(); return; }
+  if (e.key === 'g' || e.key === 'G') { const u = (localStorage.getItem('geoflyer-username') || '').trim().toLowerCase(); if (u === 'harry') return; keyFlash('k-g'); toggleGod(); return; }
   if (e.key === 'r' || e.key === 'R') { keyFlash('k-r'); forceRestart(); return; }
   if (e.key === 'h' || e.key === 'H') { keyFlash('k-h'); toggleHitboxes(); return; }
   if (e.key === 'c' || e.key === 'C') { keyFlash('k-c'); let pos = SKIN_ORDER.indexOf(shipSkin); let tries = 0; do { pos = (pos + 1) % SKIN_ORDER.length; tries++; } while (!isSkinUnlocked(SKIN_ORDER[pos]) && tries < SKIN_ORDER.length); shipSkin = SKIN_ORDER[pos]; localStorage.setItem('geoflyer-skin', shipSkin); return; }
