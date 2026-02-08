@@ -46,7 +46,7 @@ export async function onRequestPost(context) {
         return new Response(JSON.stringify({ error: 'Too many requests. Wait a few seconds.' }), { headers, status: 429 });
       }
     }
-    await context.env.LEADERBOARD.put(rateKey, Date.now().toString(), { expirationTtl: 10 });
+    await context.env.LEADERBOARD.put(rateKey, Date.now().toString(), { expirationTtl: 60 });
 
     // Read current scores
     let scores = await context.env.LEADERBOARD.get('top-scores', 'json') || [];
