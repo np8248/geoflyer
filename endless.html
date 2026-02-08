@@ -179,6 +179,7 @@ let PSIZ = T - 4;
 const G = Math.floor(GND / T);
 let shipSkin = parseInt(localStorage.getItem('geoflyer-skin') || '0');
 const SKIN_COUNT = 10;
+const SKIN_ORDER = [2, 3, 0, 1, 7, 4, 5, 6, 8, 9];
 let trailStyle = parseInt(localStorage.getItem('geoflyer-trail') || '0');
 const TRAIL_NAMES = ['None','Smoke','Fire','Rainbow','Candy','Snow','Skin Echo','Laser'];
 const TRAIL_COLORS = [
@@ -394,7 +395,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'g' || e.key === 'G') { keyFlash('k-g'); toggleGod(); return; }
   if (e.key === 'r' || e.key === 'R') { keyFlash('k-r'); forceRestart(); return; }
   if (e.key === 'h' || e.key === 'H') { keyFlash('k-h'); toggleHitboxes(); return; }
-  if (e.key === 'c' || e.key === 'C') { keyFlash('k-c'); let tries = 0; do { shipSkin = (shipSkin + 1) % SKIN_COUNT; tries++; } while (!isSkinUnlocked(shipSkin) && tries < SKIN_COUNT); localStorage.setItem('geoflyer-skin', shipSkin); return; }
+  if (e.key === 'c' || e.key === 'C') { keyFlash('k-c'); let pos = SKIN_ORDER.indexOf(shipSkin); let tries = 0; do { pos = (pos + 1) % SKIN_ORDER.length; tries++; } while (!isSkinUnlocked(SKIN_ORDER[pos]) && tries < SKIN_ORDER.length); shipSkin = SKIN_ORDER[pos]; localStorage.setItem('geoflyer-skin', shipSkin); return; }
   if (e.key === 'm' || e.key === 'M') { keyFlash('k-m'); window.location.href = 'index.html'; return; }
   if (e.code === 'Space') { keyOn('k-space'); e.preventDefault(); inputDown = true; holdJump = true; inputTap = true; onInput(); }
   if (e.code === 'ArrowUp') { keyOn('k-up'); e.preventDefault(); inputDown = true; holdJump = true; inputTap = true; onInput(); }

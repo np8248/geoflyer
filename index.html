@@ -418,10 +418,15 @@ draw();
 <script>
 (function() {
   const SKIN_NAMES = ['Sci-fi', 'Neon Racer', 'Classic', 'Space Shuttle', 'Phoenix', 'Pirate Ship', 'Ice Crystal', 'Seagull', 'Dolphin', 'Shooting Star'];
+  // Display order: Classic, Rocket, Sci-Fi, Neon, Seagull, Phoenix, Pirate Ship, Ice Crystal, Dolphin, Shooting Star
+  const SKIN_ORDER = [2, 3, 0, 1, 7, 4, 5, 6, 8, 9];
   // Full-screen overlay backgrounds per skin (saturated like GD)
   const SKIN_BG = ['#0c1a3a', '#2e0a4a', '#0a3020', '#0c1020', '#3a1a00', '#1a0e00', '#0a1a2e', '#0a2a3a', '#0a1a30', '#1a0a30'];
   const PW = 240, PH = 190;
   let activeSkin = parseInt(localStorage.getItem('geoflyer-skin') || '0');
+  // Convert stored internal index to display position
+  let skinDisplayPos = Math.max(0, SKIN_ORDER.indexOf(activeSkin));
+  activeSkin = SKIN_ORDER[skinDisplayPos];
 
   // Unlock system
   const FREE_SKINS = [0,1,2,3];
@@ -1059,21 +1064,23 @@ draw();
 
     document.getElementById('skinName').textContent = SKIN_NAMES[skinIdx];
 
-    // Update dot indicators
+    // Update dot indicators (in display order)
     const dotsEl = document.getElementById('skinDots');
-    if (dotsEl.children.length !== SKIN_NAMES.length) {
+    if (dotsEl.children.length !== SKIN_ORDER.length) {
       dotsEl.innerHTML = '';
-      for (let i = 0; i < SKIN_NAMES.length; i++) {
+      for (let i = 0; i < SKIN_ORDER.length; i++) {
         const dot = document.createElement('div');
         dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.25);transition:all 0.15s;cursor:pointer;';
         dot.addEventListener('click', () => { selectSkin(i); });
         dotsEl.appendChild(dot);
       }
     }
+    const currentSkin = parseInt(localStorage.getItem('geoflyer-skin') || '0');
     for (let i = 0; i < dotsEl.children.length; i++) {
       const dot = dotsEl.children[i];
-      const isCurrent = i === parseInt(localStorage.getItem('geoflyer-skin') || '0');
-      const isViewing = i === skinIdx;
+      const internalIdx = SKIN_ORDER[i];
+      const isCurrent = internalIdx === currentSkin;
+      const isViewing = internalIdx === skinIdx;
       if (isViewing) {
         dot.style.background = '#fff';
         dot.style.transform = 'scale(1.3)';
@@ -1130,27 +1137,32 @@ draw();
     requestAnimationFrame(animLoop);
   }
 
-  function selectSkin(i) {
-    activeSkin = ((i % SKIN_NAMES.length) + SKIN_NAMES.length) % SKIN_NAMES.length;
+  function selectSkin(displayPos) {
+    skinDisplayPos = ((displayPos % SKIN_ORDER.length) + SKIN_ORDER.length) % SKIN_ORDER.length;
+    activeSkin = SKIN_ORDER[skinDisplayPos];
     // Only save to localStorage if skin is unlocked (can still browse locked skins)
     if (isSkinUnlocked(activeSkin)) {
       localStorage.setItem('geoflyer-skin', activeSkin);
     }
   }
 
-  document.getElementById('skinPrev').addEventListener('click', () => selectSkin(activeSkin - 1));
-  document.getElementById('skinNext').addEventListener('click', () => selectSkin(activeSkin + 1));
+  document.getElementById('skinPrev').addEventListener('click', () => selectSkin(skinDisplayPos - 1));
+  document.getElementById('skinNext').addEventListener('click', () => selectSkin(skinDisplayPos + 1));
 
   animLoop();
 
   // Achievements list
   const ACHIEVEMENTS = [
-    { id: 'die-invincible', name: 'Ironic Death', desc: 'Die while invincible power-up is active', reward: 'Unlocks Fire trail' },
-    { id: 'survive-1000m', name: 'Marathon Flyer', desc: 'Survive 1000 meters', reward: 'Unlocks Shooting Star skin' },
-    { id: 'survive-2000m', name: 'Blizzard Runner', desc: 'Survive 2000 meters', reward: 'Unlocks Snow trail' },
+    // Coin collecting (least to greatest)
     { id: 'collect-25-run', name: 'Sweet Tooth', desc: 'Collect 25 coins in one run', reward: 'Unlocks Candy trail' },
     { id: 'collect-100', name: 'Coin Hoarder', desc: 'Collect 100 coins in one run', reward: 'Unlocks Rainbow trail' },
+    // Survival (least to greatest)
+    { id: 'survive-1000m', name: 'Marathon Flyer', desc: 'Survive 1000 meters', reward: 'Unlocks Shooting Star skin' },
+    { id: 'survive-2000m', name: 'Blizzard Runner', desc: 'Survive 2000 meters', reward: 'Unlocks Snow trail' },
+    // Loyalty
     { id: 'loyal-10', name: 'Loyal Flyer', desc: 'Play same skin 10 games in a row (300m+ each)', reward: 'Unlocks Skin Echo trail' },
+    // Power-ups
+    { id: 'die-invincible', name: 'Ironic Death', desc: 'Die while invincible power-up is active', reward: 'Unlocks Fire trail' },
     { id: 'bamboozled-3', name: 'Bamboozle Survivor', desc: 'Get bamboozled 3 times in one run', reward: 'Unlocks Laser trail' }
   ];
   function populateAchievements() {
@@ -1202,6 +1214,8 @@ draw();
     null
   ];
   const FREE_TRAILS = [0, 1];
+  // Display order: None, Smoke, Candy(25 coins), Rainbow(100 coins), Skin Echo(loyal), Snow(2000m), Fire(invincible), Laser(bamboozled)
+  const TRAIL_ORDER = [0, 1, 4, 3, 6, 5, 2, 7];
   const TRAIL_ACHIEVEMENTS = {
     2: {achId: 'die-invincible', desc: 'Die while invincible power-up is active'},
     3: {achId: 'collect-100', desc: 'Collect 100 coins in one run'},
@@ -1217,6 +1231,8 @@ draw();
   function isTrailUnlocked(idx) { return FREE_TRAILS.includes(idx) || getUnlockedTrails().includes(idx); }
   let activeTrail = parseInt(localStorage.getItem('geoflyer-trail') || '0');
   if (!isTrailUnlocked(activeTrail)) { activeTrail = 0; localStorage.setItem('geoflyer-trail', '0'); }
+  let trailDisplayPos = Math.max(0, TRAIL_ORDER.indexOf(activeTrail));
+  activeTrail = TRAIL_ORDER[trailDisplayPos];
   const trailCanvas = document.getElementById('trailCanvas');
   const trailCtx = trailCanvas.getContext('2d');
 
@@ -1381,31 +1397,33 @@ draw();
       trailCtx.fillText(achInfo ? achInfo.desc : 'Complete achievement to unlock', w/2, h/2 + 18);
     }
 
-    // Dots
+    // Dots (in display order)
     const dotsEl = document.getElementById('trailDots');
-    if (dotsEl.children.length !== TRAIL_NAMES.length) {
+    if (dotsEl.children.length !== TRAIL_ORDER.length) {
       dotsEl.innerHTML = '';
-      for (let i = 0; i < TRAIL_NAMES.length; i++) {
+      for (let i = 0; i < TRAIL_ORDER.length; i++) {
         const dot = document.createElement('div');
         dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.25);transition:all 0.15s;cursor:pointer;';
-        dot.addEventListener('click', () => { activeTrail = i; });
+        dot.addEventListener('click', () => { selectTrail(i); });
         dotsEl.appendChild(dot);
       }
     }
     for (let i = 0; i < dotsEl.children.length; i++) {
-      dotsEl.children[i].style.background = i === activeTrail ? '#fff' : 'rgba(255,255,255,0.25)';
-      dotsEl.children[i].style.transform = i === activeTrail ? 'scale(1.3)' : 'scale(1)';
+      const trailIdx = TRAIL_ORDER[i];
+      dotsEl.children[i].style.background = trailIdx === activeTrail ? '#fff' : 'rgba(255,255,255,0.25)';
+      dotsEl.children[i].style.transform = trailIdx === activeTrail ? 'scale(1.3)' : 'scale(1)';
     }
   }
 
-  function selectTrail(i) {
-    activeTrail = ((i % TRAIL_NAMES.length) + TRAIL_NAMES.length) % TRAIL_NAMES.length;
+  function selectTrail(displayPos) {
+    trailDisplayPos = ((displayPos % TRAIL_ORDER.length) + TRAIL_ORDER.length) % TRAIL_ORDER.length;
+    activeTrail = TRAIL_ORDER[trailDisplayPos];
     if (isTrailUnlocked(activeTrail)) {
       localStorage.setItem('geoflyer-trail', activeTrail);
     }
   }
-  document.getElementById('trailPrev').addEventListener('click', () => selectTrail(activeTrail - 1));
-  document.getElementById('trailNext').addEventListener('click', () => selectTrail(activeTrail + 1));
+  document.getElementById('trailPrev').addEventListener('click', () => selectTrail(trailDisplayPos - 1));
+  document.getElementById('trailNext').addEventListener('click', () => selectTrail(trailDisplayPos + 1));
 
   // Animate trail preview
   function trailAnimLoop() {
