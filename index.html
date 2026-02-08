@@ -1299,15 +1299,32 @@ draw();
       }
       trailCtx.globalAlpha = 1;
     } else if (activeTrail === 5) {
-      // Snow particles
-      const tc = TRAIL_COLORS[5];
-      for (let i = 0; i < 16; i++) {
-        const fx = w-30-i*10+Math.sin(t+i*1.2)*4;
-        const fy = h/2+Math.sin(t*1.5+i*0.9)*12;
-        const sz = 8-i*0.4;
-        trailCtx.globalAlpha = 0.7-i*0.04;
-        trailCtx.fillStyle = tc[i%tc.length];
-        trailCtx.beginPath(); trailCtx.arc(fx,fy,Math.max(1,sz),0,Math.PI*2); trailCtx.fill();
+      // Snow — snowflake crystals
+      for (let i = 0; i < 14; i++) {
+        const seed = i * 73.7;
+        const age = (t * 0.6 + seed) % 3.5;
+        const fx = w - 30 - age * 25;
+        const fy = h/2 + Math.sin(seed) * 8 + age * age * 2;
+        const sz = 7 - age * 1;
+        const spin = t * 1.5 + seed;
+        trailCtx.globalAlpha = Math.max(0, 0.75 - age * 0.18);
+        trailCtx.strokeStyle = i % 3 === 0 ? '#ffffff' : (i % 3 === 1 ? '#cceeff' : '#aaddff');
+        trailCtx.lineWidth = 1;
+        trailCtx.save();
+        trailCtx.translate(fx, fy);
+        trailCtx.rotate(spin);
+        for (let a = 0; a < 6; a++) {
+          const ang = a * Math.PI / 3;
+          const cx = Math.cos(ang), sy = Math.sin(ang);
+          trailCtx.beginPath(); trailCtx.moveTo(0, 0); trailCtx.lineTo(cx * sz, sy * sz); trailCtx.stroke();
+          trailCtx.beginPath(); trailCtx.moveTo(cx * sz * 0.5, sy * sz * 0.5);
+          trailCtx.lineTo(cx * sz * 0.5 + Math.cos(ang + 0.8) * sz * 0.3, sy * sz * 0.5 + Math.sin(ang + 0.8) * sz * 0.3);
+          trailCtx.stroke();
+          trailCtx.beginPath(); trailCtx.moveTo(cx * sz * 0.5, sy * sz * 0.5);
+          trailCtx.lineTo(cx * sz * 0.5 + Math.cos(ang - 0.8) * sz * 0.3, sy * sz * 0.5 + Math.sin(ang - 0.8) * sz * 0.3);
+          trailCtx.stroke();
+        }
+        trailCtx.restore();
       }
       trailCtx.globalAlpha = 1;
     } else if (activeTrail === 6) {
