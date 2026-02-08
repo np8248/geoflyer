@@ -1282,58 +1282,74 @@ document.addEventListener('DOMContentLoaded', function() {
         break;
       }
       case 12: { // Curry
-        const S = Math.min(PW, PH) * 0.55;
-        // Bowl shape — wide rounded white/cream dish
+        const S = Math.min(PW, PH) * 0.6;
+        // Plate shadow
         ctx.save();
-        ctx.shadowColor = '#E8A020'; ctx.shadowBlur = 10;
-        ctx.fillStyle = '#F5F0E0';
-        ctx.strokeStyle = '#8B7355'; ctx.lineWidth = 3;
+        ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+        // Flat plate — wide ellipse, 3/4 view
+        ctx.fillStyle = '#E8E0D0';
+        ctx.strokeStyle = '#B8A88A'; ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(-S/2, -S/8);
-        ctx.quadraticCurveTo(-S/2, S/3, -S/4, S/3);
-        ctx.lineTo(S/4, S/3);
-        ctx.quadraticCurveTo(S/2, S/3, S/2, -S/8);
-        ctx.lineTo(-S/2, -S/8);
-        ctx.closePath(); ctx.fill(); ctx.stroke();
-        ctx.restore();
-        // Bowl rim
-        ctx.fillStyle = '#FFF8EE';
-        ctx.strokeStyle = '#8B7355'; ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.ellipse(0, -S/8, S/2, S/8, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, S/6, S * 0.6, S/3, 0, 0, Math.PI * 2);
         ctx.fill(); ctx.stroke();
-        // Curry filling (left side)
-        ctx.fillStyle = '#E8A020';
+        ctx.restore();
+        // Plate inner
+        ctx.fillStyle = '#F0EBE0';
         ctx.beginPath();
-        ctx.ellipse(-S/6, -S/8, S/4, S/10, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, S/6, S * 0.6 - 4, S/3 - 3, 0, 0, Math.PI * 2);
         ctx.fill();
-        // Rice mound (right side)
+        // Plate rim highlight
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(0, S/6, S * 0.6 - 2, S/3 - 1, 0, Math.PI + 0.3, Math.PI * 2 - 0.3);
+        ctx.stroke();
+        // Clip to plate interior
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(0, S/6, S * 0.6 - 5, S/3 - 4, 0, 0, Math.PI * 2);
+        ctx.clip();
+        // Brown curry sauce — right/front
+        ctx.fillStyle = '#9B7234';
+        ctx.beginPath();
+        ctx.ellipse(S/6, S/5, S/2.5, S/3, 0.1, 0, Math.PI * 2);
+        ctx.fill();
+        // Curry highlight
+        ctx.fillStyle = '#B08640';
+        ctx.beginPath();
+        ctx.ellipse(S/5, S/10, S/5, S/6, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        // Orange carrot/potato chunks
+        ctx.fillStyle = '#E08838';
+        ctx.beginPath(); ctx.moveTo(S/6, S/6); ctx.lineTo(S/6 + 6, S/6 - 3); ctx.lineTo(S/6 + 8, S/6 + 4); ctx.lineTo(S/6 + 2, S/6 + 5); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(S/3, S/12); ctx.lineTo(S/3 + 5, S/12 - 3); ctx.lineTo(S/3 + 7, S/12 + 3); ctx.lineTo(S/3 + 2, S/12 + 4); ctx.closePath(); ctx.fill();
+        // Green peas
+        ctx.fillStyle = '#7A9A3A';
+        ctx.beginPath(); ctx.arc(S/10, S/3, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(S/20, S/5, 2.5, 0, Math.PI * 2); ctx.fill();
+        // Red meat piece
+        ctx.fillStyle = '#C84030';
+        ctx.beginPath(); ctx.arc(0, S/10, 3.5, 0, Math.PI * 2); ctx.fill();
+        // Rice mound — tall dome on back-left
         ctx.fillStyle = '#FAFAFA';
         ctx.beginPath();
-        ctx.ellipse(S/6, -S/8, S/5, S/8, 0, Math.PI, 0);
-        ctx.fill();
+        ctx.moveTo(-S/2, S/6);
+        ctx.quadraticCurveTo(-S/2, -S/3, -S/6, -S/2.5);
+        ctx.quadraticCurveTo(S/8, -S/4, S/6, S/8);
+        ctx.quadraticCurveTo(S/12, S/5, -S/8, S/5);
+        ctx.quadraticCurveTo(-S/2, S/5, -S/2, S/6);
+        ctx.closePath(); ctx.fill();
+        // Rice grain texture
         ctx.fillStyle = '#F0F0F0';
+        ctx.beginPath(); ctx.ellipse(-S/4, -S/8, 3, 1.5, 0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(-S/6, -S/5, 2.5, 1.2, -0.4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(-S/8, S/12, 2.5, 1, 0.6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(-S/3, 0, 3, 1.2, 0.2, 0, Math.PI * 2); ctx.fill();
+        // Rice shadow at base
+        ctx.fillStyle = 'rgba(0,0,0,0.06)';
         ctx.beginPath();
-        ctx.ellipse(S/6, -S/8, S/5, S/14, 0, 0, Math.PI);
+        ctx.ellipse(-S/6, S/7, S/4, S/10, 0, 0, Math.PI * 2);
         ctx.fill();
-        // Curry chunks
-        ctx.fillStyle = '#C07818';
-        ctx.beginPath(); ctx.arc(-S/5, -S/7, 3, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(-S/8, -S/10, 2.5, 0, Math.PI * 2); ctx.fill();
-        // Steam wisps
-        ctx.strokeStyle = 'rgba(180,180,180,0.5)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(-S/8, -S/3);
-        ctx.quadraticCurveTo(-S/8 + 4, -S/3 - S/5, -S/8 - 3, -S/3 - S/2.5);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(S/10, -S/3);
-        ctx.quadraticCurveTo(S/10 - 3, -S/3 - S/5, S/10 + 3, -S/3 - S/2.5);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(0, -S/3 + 3);
-        ctx.quadraticCurveTo(3, -S/3 - S/6, -1, -S/3 - S/3);
-        ctx.stroke();
+        ctx.restore();
         break;
       }
     }
@@ -1903,45 +1919,43 @@ document.addEventListener('DOMContentLoaded', function() {
         break;
       }
       case 12: { // Curry mini
-        // Mini bowl shape
-        bctx.save();
-        bctx.shadowColor = '#E8A020'; bctx.shadowBlur = 3;
-        bctx.fillStyle = '#F5F0E0';
-        bctx.strokeStyle = '#8B7355'; bctx.lineWidth = 1.5;
+        // Mini plate
+        bctx.fillStyle = '#E8E0D0';
+        bctx.strokeStyle = '#B8A88A'; bctx.lineWidth = 1;
         bctx.beginPath();
-        bctx.moveTo(-S/3, -S/10);
-        bctx.quadraticCurveTo(-S/3, S/4, -S/6, S/4);
-        bctx.lineTo(S/6, S/4);
-        bctx.quadraticCurveTo(S/3, S/4, S/3, -S/10);
-        bctx.lineTo(-S/3, -S/10);
-        bctx.closePath(); bctx.fill(); bctx.stroke();
-        bctx.restore();
-        // Rim
-        bctx.fillStyle = '#FFF8EE';
-        bctx.strokeStyle = '#8B7355'; bctx.lineWidth = 1;
-        bctx.beginPath();
-        bctx.ellipse(0, -S/10, S/3, S/10, 0, 0, Math.PI * 2);
+        bctx.ellipse(0, S/8, S/3, S/5, 0, 0, Math.PI * 2);
         bctx.fill(); bctx.stroke();
-        // Curry half (left)
-        bctx.fillStyle = '#E8A020';
+        // Plate inner
+        bctx.fillStyle = '#F0EBE0';
         bctx.beginPath();
-        bctx.ellipse(-S/8, -S/10, S/5, S/14, 0, 0, Math.PI * 2);
+        bctx.ellipse(0, S/8, S/3 - 1.5, S/5 - 1, 0, 0, Math.PI * 2);
         bctx.fill();
-        // Rice half (right)
+        // Clip to plate
+        bctx.save();
+        bctx.beginPath();
+        bctx.ellipse(0, S/8, S/3 - 2, S/5 - 1.5, 0, 0, Math.PI * 2);
+        bctx.clip();
+        // Brown curry — right side
+        bctx.fillStyle = '#9B7234';
+        bctx.beginPath();
+        bctx.ellipse(S/8, S/8, S/4, S/4, 0, 0, Math.PI * 2);
+        bctx.fill();
+        // Orange chunks
+        bctx.fillStyle = '#E08838';
+        bctx.beginPath(); bctx.arc(S/8, S/10, 1.2, 0, Math.PI * 2); bctx.fill();
+        // Green pea
+        bctx.fillStyle = '#7A9A3A';
+        bctx.beginPath(); bctx.arc(S/16, S/5, 1, 0, Math.PI * 2); bctx.fill();
+        // Rice mound — back-left dome
         bctx.fillStyle = '#FAFAFA';
         bctx.beginPath();
-        bctx.ellipse(S/8, -S/10, S/6, S/10, 0, Math.PI, 0);
-        bctx.fill();
-        // Mini steam
-        bctx.strokeStyle = 'rgba(180,180,180,0.4)'; bctx.lineWidth = 0.8; bctx.lineCap = 'round';
-        bctx.beginPath();
-        bctx.moveTo(-S/10, -S/4);
-        bctx.quadraticCurveTo(-S/10 + 1, -S/3, -S/10 - 1, -S/2.5);
-        bctx.stroke();
-        bctx.beginPath();
-        bctx.moveTo(S/10, -S/4);
-        bctx.quadraticCurveTo(S/10 - 1, -S/3, S/10 + 1, -S/2.5);
-        bctx.stroke();
+        bctx.moveTo(-S/4, S/8);
+        bctx.quadraticCurveTo(-S/4, -S/5, -S/10, -S/4);
+        bctx.quadraticCurveTo(S/14, -S/7, S/10, S/10);
+        bctx.quadraticCurveTo(0, S/6, -S/8, S/6);
+        bctx.quadraticCurveTo(-S/4, S/6, -S/4, S/8);
+        bctx.closePath(); bctx.fill();
+        bctx.restore();
         break;
       }
     }
