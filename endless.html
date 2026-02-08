@@ -126,8 +126,8 @@ let SHIP_MAX = 7;
 let PSIZ = T - 4;
 const G = Math.floor(GND / T);
 let shipSkin = parseInt(localStorage.getItem('geoflyer-skin') || '0');
-const SKIN_COUNT = 11;
-const SKIN_ORDER = [2, 3, 0, 1, 7, 4, 5, 6, 8, 9, 10];
+const SKIN_COUNT = 12;
+const SKIN_ORDER = [2, 3, 0, 1, 7, 4, 5, 6, 8, 9, 10, 11];
 let trailStyle = parseInt(localStorage.getItem('geoflyer-trail') || '0');
 const TRAIL_NAMES = ['None','Smoke','Fire','Rainbow','Candy','Snow','Skin Echo','Laser','Champion'];
 const TRAIL_COLORS = [
@@ -363,7 +363,7 @@ let pendingDeathScore = 0; // stored for deathUsername flow
 (function() {
   const u = (localStorage.getItem('geoflyer-username') || '').trim().toLowerCase();
   if (u === 'np8248') {
-    const allSkins = [0,1,2,3,4,5,6,7,8,9,10];
+    const allSkins = [0,1,2,3,4,5,6,7,8,9,10,11];
     localStorage.setItem('geoflyer-unlocked', JSON.stringify(allSkins));
     const allTrails = [0,1,2,3,4,5,6,7,8];
     localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify(allTrails));
@@ -381,6 +381,20 @@ let pendingDeathScore = 0; // stored for deathUsername flow
       grantAchievement('leaderboard-1');
       const trails = getUnlockedTrails();
       if (!trails.includes(8)) { trails.push(8); localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify(trails)); }
+    }
+  } catch(e) {}
+})();
+
+// Check if player has been granted capybara skin (skin 11)
+(async function checkCapybaraGrant() {
+  try {
+    const username = localStorage.getItem('geoflyer-username');
+    if (!username) return;
+    const res = await fetch('/api/grant');
+    const data = await res.json();
+    if (data.granted && data.granted.includes(username.trim().toLowerCase())) {
+      const skins = JSON.parse(localStorage.getItem('geoflyer-unlocked') || '[0,1,2,3]');
+      if (!skins.includes(11)) { skins.push(11); localStorage.setItem('geoflyer-unlocked', JSON.stringify(skins)); }
     }
   } catch(e) {}
 })();
@@ -2824,6 +2838,103 @@ function drawCubeSkin10() {
   X.globalAlpha = 1;
 }
 
+function drawShipSkin11() {
+  const w = PSIZ * 1.2, h = PSIZ;
+  // Warm brown glow
+  X.save();
+  X.shadowColor = '#8B6914'; X.shadowBlur = 10;
+  // Body: brown rounded capsule
+  X.fillStyle = '#8B6914';
+  X.beginPath();
+  X.moveTo(w/2 + 2, 0);
+  X.quadraticCurveTo(w/2 + 2, -h/3, w/6, -h/3);
+  X.lineTo(-w/3, -h/3);
+  X.quadraticCurveTo(-w/2, -h/3, -w/2, 0);
+  X.quadraticCurveTo(-w/2, h/3, -w/3, h/3);
+  X.lineTo(w/6, h/3);
+  X.quadraticCurveTo(w/2 + 2, h/3, w/2 + 2, 0);
+  X.closePath(); X.fill();
+  X.restore();
+  // Body highlight
+  X.fillStyle = '#A67B3D';
+  X.beginPath();
+  X.moveTo(w/4, -h/6);
+  X.quadraticCurveTo(w/6, -h/4, -w/6, -h/4);
+  X.lineTo(-w/6, -h/8);
+  X.lineTo(w/4, -h/8);
+  X.closePath(); X.fill();
+  // Snout bump at front
+  X.fillStyle = '#A67B3D';
+  X.beginPath();
+  X.arc(w/2 + 4, 2, h/5, 0, Math.PI * 2);
+  X.fill();
+  // Pink nose dot
+  X.fillStyle = '#ff8fab';
+  X.beginPath();
+  X.arc(w/2 + 7, 2, 2.5, 0, Math.PI * 2);
+  X.fill();
+  // Ears: two semicircle bumps on top-rear
+  X.fillStyle = '#8B6914';
+  X.beginPath(); X.arc(-w/5, -h/3 - 3, 4, Math.PI, 0); X.fill();
+  X.beginPath(); X.arc(-w/5 + 10, -h/3 - 3, 4, Math.PI, 0); X.fill();
+  // Inner ears
+  X.fillStyle = '#d4a574';
+  X.beginPath(); X.arc(-w/5, -h/3 - 3, 2.5, Math.PI, 0); X.fill();
+  X.beginPath(); X.arc(-w/5 + 10, -h/3 - 3, 2.5, Math.PI, 0); X.fill();
+  // Eye: dark circle with white highlight (side view, one eye)
+  X.fillStyle = '#1a1a1a';
+  X.beginPath(); X.arc(w/5, -h/8, 4, 0, Math.PI * 2); X.fill();
+  X.fillStyle = '#fff';
+  X.beginPath(); X.arc(w/5 + 1.5, -h/8 - 1.5, 1.5, 0, Math.PI * 2); X.fill();
+  // Two small leg stubs at bottom
+  X.fillStyle = '#6b5210';
+  X.fillRect(-w/6, h/3 - 1, 6, 5);
+  X.fillRect(w/8, h/3 - 1, 6, 5);
+  // "C" on body
+  X.fillStyle = '#fff';
+  X.font = 'bold ' + Math.floor(h * 0.35) + 'px Arial';
+  X.textAlign = 'center'; X.textBaseline = 'middle';
+  X.fillText('C', -w/10, 2);
+}
+
+function drawCubeSkin11() {
+  const h = PSIZ;
+  // Brown body fill
+  X.save();
+  X.shadowColor = '#8B6914'; X.shadowBlur = 10;
+  X.fillStyle = '#8B6914';
+  X.fillRect(-h/2, -h/2, h, h);
+  X.restore();
+  // Slightly lighter inner
+  X.fillStyle = '#A67B3D';
+  X.fillRect(-h/2 + 3, -h/2 + 3, h - 6, h/2 - 3);
+  // Ear bumps poking above top edge
+  X.fillStyle = '#8B6914';
+  X.beginPath(); X.arc(-h/5, -h/2, 5, Math.PI, 0); X.fill();
+  X.beginPath(); X.arc(h/5, -h/2, 5, Math.PI, 0); X.fill();
+  X.fillStyle = '#d4a574';
+  X.beginPath(); X.arc(-h/5, -h/2, 3, Math.PI, 0); X.fill();
+  X.beginPath(); X.arc(h/5, -h/2, 3, Math.PI, 0); X.fill();
+  // Two round dark eyes with white highlights
+  X.fillStyle = '#1a1a1a';
+  X.beginPath(); X.arc(-h/5, -h/8, 5, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(h/5, -h/8, 5, 0, Math.PI * 2); X.fill();
+  X.fillStyle = '#fff';
+  X.beginPath(); X.arc(-h/5 + 1.5, -h/8 - 1.5, 2, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(h/5 + 1.5, -h/8 - 1.5, 2, 0, Math.PI * 2); X.fill();
+  // Pink oval nose
+  X.fillStyle = '#ff8fab';
+  X.beginPath(); X.ellipse(0, h/6, 4, 3, 0, 0, Math.PI * 2); X.fill();
+  // White "C" below nose
+  X.fillStyle = '#fff';
+  X.font = 'bold ' + Math.floor(h * 0.3) + 'px Arial';
+  X.textAlign = 'center'; X.textBaseline = 'middle';
+  X.fillText('C', 0, h/3);
+  // Brown border
+  X.strokeStyle = '#6b5210'; X.lineWidth = 2;
+  X.strokeRect(-h/2, -h/2, h, h);
+}
+
 function drawPlayer() {
   if (P.dead) {
     particles.forEach(p => {
@@ -3009,6 +3120,7 @@ function drawPlayer() {
             case 6: drawShipSkin6(); break; case 7: drawShipSkin7(); break;
             case 8: drawShipSkin8(); break; case 9: drawShipSkin9(); break;
             case 10: drawShipSkin10(); break;
+            case 11: drawShipSkin11(); break;
           }
         } else {
           switch(shipSkin) {
@@ -3018,6 +3130,7 @@ function drawPlayer() {
             case 6: drawCubeSkin6(); break; case 7: drawCubeSkin7(); break;
             case 8: drawCubeSkin8(); break; case 9: drawCubeSkin9(); break;
             case 10: drawCubeSkin10(); break;
+            case 11: drawCubeSkin11(); break;
           }
         }
         X.restore();
@@ -3071,6 +3184,7 @@ function drawPlayer() {
       case 8: drawShipSkin8(); break;
       case 9: drawShipSkin9(); break;
       case 10: drawShipSkin10(); break;
+      case 11: drawShipSkin11(); break;
     }
   } else {
     switch (shipSkin) {
@@ -3085,6 +3199,7 @@ function drawPlayer() {
       case 8: drawCubeSkin8(); break;
       case 9: drawCubeSkin9(); break;
       case 10: drawCubeSkin10(); break;
+      case 11: drawCubeSkin11(); break;
     }
   }
   X.restore();

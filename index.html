@@ -504,11 +504,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 (function() {
-  const SKIN_NAMES = ['Sci-fi', 'Neon Racer', 'Classic', 'Space Shuttle', 'Phoenix', 'Pirate Ship', 'Ice Crystal', 'Seagull', 'Dolphin', 'Shooting Star', 'Champion'];
+  const SKIN_NAMES = ['Sci-fi', 'Neon Racer', 'Classic', 'Space Shuttle', 'Phoenix', 'Pirate Ship', 'Ice Crystal', 'Seagull', 'Dolphin', 'Shooting Star', 'Champion', 'Capybara'];
   // Display order: Classic, Rocket, Sci-Fi, Neon, Seagull, Phoenix, Pirate Ship, Ice Crystal, Dolphin, Shooting Star, Champion
-  const SKIN_ORDER = [2, 3, 0, 1, 7, 4, 5, 6, 8, 9, 10];
+  const SKIN_ORDER = [2, 3, 0, 1, 7, 4, 5, 6, 8, 9, 10, 11];
   // Full-screen overlay backgrounds per skin (saturated like GD)
-  const SKIN_BG = ['#0c1a3a', '#2e0a4a', '#0a3020', '#0c1020', '#3a1a00', '#1a0e00', '#0a1a2e', '#0a2a3a', '#0a1a30', '#1a0a30', '#2a1a00'];
+  const SKIN_BG = ['#0c1a3a', '#2e0a4a', '#0a3020', '#0c1020', '#3a1a00', '#1a0e00', '#0a1a2e', '#0a2a3a', '#0a1a30', '#1a0a30', '#2a1a00', '#2a1a08'];
   const PW = 240, PH = 190;
   let activeSkin = parseInt(localStorage.getItem('geoflyer-skin') || '0');
   // Convert stored internal index to display position
@@ -519,7 +519,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const FREE_SKINS = [0,1,2,3];
   const SKIN_COSTS = {4:50, 5:100, 6:150, 7:200, 8:250};
   // Achievement-locked skins (no coin cost)
-  const ACHIEVEMENT_SKINS = {9: {achId: 'survive-1000m', desc: 'Survive 1000 meters'}, 10: {achId: 'leaderboard-1', desc: 'Reach #1 on the leaderboard'}};
+  const ACHIEVEMENT_SKINS = {9: {achId: 'survive-1000m', desc: 'Survive 1000 meters'}, 10: {achId: 'leaderboard-1', desc: 'Reach #1 on the leaderboard'}, 11: {achId: 'owner-grant', desc: 'Granted by the owner'}};
   function getAchievements() {
     try { return JSON.parse(localStorage.getItem('geoflyer-achievements') || '{}'); }
     catch(e) { return {}; }
@@ -529,9 +529,22 @@ document.addEventListener('DOMContentLoaded', function() {
   (function() {
     const u = (localStorage.getItem('geoflyer-username') || '').trim().toLowerCase();
     if (u === 'np8248') {
-      localStorage.setItem('geoflyer-unlocked', JSON.stringify([0,1,2,3,4,5,6,7,8,9,10]));
+      localStorage.setItem('geoflyer-unlocked', JSON.stringify([0,1,2,3,4,5,6,7,8,9,10,11]));
       localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify([0,1,2,3,4,5,6,7,8]));
     }
+  })();
+  // Check if player has been granted capybara skin (skin 11)
+  (async function checkCapybaraGrant() {
+    try {
+      const username = localStorage.getItem('geoflyer-username');
+      if (!username) return;
+      const res = await fetch('/api/grant');
+      const data = await res.json();
+      if (data.granted && data.granted.includes(username.trim().toLowerCase())) {
+        const skins = JSON.parse(localStorage.getItem('geoflyer-unlocked') || '[0,1,2,3]');
+        if (!skins.includes(11)) { skins.push(11); localStorage.setItem('geoflyer-unlocked', JSON.stringify(skins)); }
+      }
+    } catch(e) {}
   })();
   // Initialize default unlocks if missing
   if (!localStorage.getItem('geoflyer-unlocked')) localStorage.setItem('geoflyer-unlocked', JSON.stringify([0,1,2,3]));
@@ -1187,6 +1200,64 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.globalAlpha = 1;
         break;
       }
+      case 11: { // Capybara
+        const S = Math.min(PW, PH) * 0.55;
+        // Warm brown glow
+        ctx.save();
+        ctx.shadowColor = '#8B6914'; ctx.shadowBlur = 14;
+        // Body: brown rounded capsule (side-view capybara)
+        ctx.fillStyle = '#8B6914';
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 4, 0);
+        ctx.quadraticCurveTo(S/2 + 4, -S/3, S/6, -S/3);
+        ctx.lineTo(-S/3, -S/3);
+        ctx.quadraticCurveTo(-S/2, -S/3, -S/2, 0);
+        ctx.quadraticCurveTo(-S/2, S/3, -S/3, S/3);
+        ctx.lineTo(S/6, S/3);
+        ctx.quadraticCurveTo(S/2 + 4, S/3, S/2 + 4, 0);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+        // Body highlight
+        ctx.fillStyle = '#A67B3D';
+        ctx.beginPath();
+        ctx.moveTo(S/4, -S/6);
+        ctx.quadraticCurveTo(S/6, -S/4, -S/6, -S/4);
+        ctx.lineTo(-S/6, -S/8);
+        ctx.lineTo(S/4, -S/8);
+        ctx.closePath(); ctx.fill();
+        // Snout bump at front
+        ctx.fillStyle = '#A67B3D';
+        ctx.beginPath();
+        ctx.arc(S/2 + 8, 4, S/5, 0, Math.PI * 2);
+        ctx.fill();
+        // Pink nose dot
+        ctx.fillStyle = '#ff8fab';
+        ctx.beginPath();
+        ctx.arc(S/2 + 14, 4, 4, 0, Math.PI * 2);
+        ctx.fill();
+        // Ears: two semicircle bumps on top-rear
+        ctx.fillStyle = '#8B6914';
+        ctx.beginPath(); ctx.arc(-S/5, -S/3 - 5, 6, Math.PI, 0); ctx.fill();
+        ctx.beginPath(); ctx.arc(-S/5 + 16, -S/3 - 5, 6, Math.PI, 0); ctx.fill();
+        ctx.fillStyle = '#d4a574';
+        ctx.beginPath(); ctx.arc(-S/5, -S/3 - 5, 4, Math.PI, 0); ctx.fill();
+        ctx.beginPath(); ctx.arc(-S/5 + 16, -S/3 - 5, 4, Math.PI, 0); ctx.fill();
+        // Eye: dark circle with white highlight
+        ctx.fillStyle = '#1a1a1a';
+        ctx.beginPath(); ctx.arc(S/5, -S/8, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(S/5 + 2, -S/8 - 2, 2.5, 0, Math.PI * 2); ctx.fill();
+        // Two small leg stubs at bottom
+        ctx.fillStyle = '#6b5210';
+        ctx.fillRect(-S/6, S/3 - 2, 10, 8);
+        ctx.fillRect(S/8, S/3 - 2, 10, 8);
+        // "C" on body
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold ' + Math.floor(S * 0.35) + 'px Arial';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('C', -S/10, 4);
+        break;
+      }
     }
     ctx.restore();
 
@@ -1715,6 +1786,24 @@ document.addEventListener('DOMContentLoaded', function() {
         bctx.fillRect(-2, -2, 4, 3);
         bctx.fillRect(-0.5, 1, 1, 1.5);
         bctx.fillRect(-1.5, 2.5, 3, 0.8);
+        break;
+      }
+      case 11: { // Capybara mini
+        // Mini brown rounded shape
+        bctx.fillStyle = '#8B6914';
+        bctx.beginPath();
+        bctx.moveTo(S/3, 0);
+        bctx.quadraticCurveTo(S/3, -S/4, 0, -S/4);
+        bctx.quadraticCurveTo(-S/3, -S/4, -S/3, 0);
+        bctx.quadraticCurveTo(-S/3, S/4, 0, S/4);
+        bctx.quadraticCurveTo(S/3, S/4, S/3, 0);
+        bctx.closePath(); bctx.fill();
+        // Ear bumps
+        bctx.beginPath(); bctx.arc(-S/6, -S/4 - 2, 3, Math.PI, 0); bctx.fill();
+        bctx.beginPath(); bctx.arc(S/6, -S/4 - 2, 3, Math.PI, 0); bctx.fill();
+        // Dot eye
+        bctx.fillStyle = '#1a1a1a';
+        bctx.beginPath(); bctx.arc(S/8, -S/10, 2, 0, Math.PI * 2); bctx.fill();
         break;
       }
     }
