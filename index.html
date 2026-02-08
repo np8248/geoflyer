@@ -1222,12 +1222,18 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.save();
         ctx.shadowColor = '#C89830'; ctx.shadowBlur = 5;
         ctx.fillStyle = '#DAAF4A';
+        ctx.beginPath();
+        ctx.moveTo(S/4, -S/5);
+        ctx.quadraticCurveTo(S/2 + 6, -S/5, S/2 + 6, 0);
+        ctx.quadraticCurveTo(S/2 + 6, S/5, S/4, S/5);
+        ctx.closePath(); ctx.fill();
+        // Only stroke the outer curve
         ctx.strokeStyle = '#4A3228'; ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(S/4, -S/5);
         ctx.quadraticCurveTo(S/2 + 6, -S/5, S/2 + 6, 0);
         ctx.quadraticCurveTo(S/2 + 6, S/5, S/4, S/5);
-        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.stroke();
         ctx.restore();
         // Shine highlight
         ctx.fillStyle = 'rgba(255,240,180,0.35)';
@@ -1825,12 +1831,17 @@ document.addEventListener('DOMContentLoaded', function() {
         bctx.restore();
         // Mini snout bump
         bctx.fillStyle = '#DAAF4A';
+        bctx.beginPath();
+        bctx.moveTo(S/8, -S/8);
+        bctx.quadraticCurveTo(S/3, -S/8, S/3, 0);
+        bctx.quadraticCurveTo(S/3, S/8, S/8, S/8);
+        bctx.closePath(); bctx.fill();
         bctx.strokeStyle = '#4A3228'; bctx.lineWidth = 1.5;
         bctx.beginPath();
         bctx.moveTo(S/8, -S/8);
         bctx.quadraticCurveTo(S/3, -S/8, S/3, 0);
         bctx.quadraticCurveTo(S/3, S/8, S/8, S/8);
-        bctx.closePath(); bctx.fill(); bctx.stroke();
+        bctx.stroke();
         // Tiny ear bump
         bctx.fillStyle = '#D4A43C';
         bctx.beginPath(); bctx.arc(S/10, -S/3, 2, Math.PI, 0); bctx.fill(); bctx.stroke();

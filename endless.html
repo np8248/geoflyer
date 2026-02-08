@@ -2860,12 +2860,18 @@ function drawShipSkin11() {
   X.save();
   X.shadowColor = '#C89830'; X.shadowBlur = 4;
   X.fillStyle = '#DAAF4A';
+  X.beginPath();
+  X.moveTo(w/4, -h/5);
+  X.quadraticCurveTo(w/2 + 4, -h/5, w/2 + 4, 0);
+  X.quadraticCurveTo(w/2 + 4, h/5, w/4, h/5);
+  X.closePath(); X.fill();
+  // Only stroke the outer curve, not the inner edge
   X.strokeStyle = '#4A3228'; X.lineWidth = 2.5;
   X.beginPath();
   X.moveTo(w/4, -h/5);
   X.quadraticCurveTo(w/2 + 4, -h/5, w/2 + 4, 0);
   X.quadraticCurveTo(w/2 + 4, h/5, w/4, h/5);
-  X.closePath(); X.fill(); X.stroke();
+  X.stroke();
   X.restore();
   // Highlight shine on body
   X.fillStyle = 'rgba(255,240,180,0.35)';
