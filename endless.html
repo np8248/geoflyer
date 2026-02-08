@@ -185,7 +185,8 @@ const ACHIEVEMENTS = {
   'collect-25-run': { name: 'Sweet Tooth', desc: 'Collect 25 coins in one run', reward: 'trail', rewardTrail: 4 },
   'survive-2000m': { name: 'Blizzard Runner', desc: 'Survive 2000 meters', reward: 'trail', rewardTrail: 5 },
   'loyal-10': { name: 'Loyal Flyer', desc: 'Play same skin 10 games in a row (300m+ each)', reward: 'trail', rewardTrail: 6 },
-  'bamboozled-3': { name: 'Bamboozle Survivor', desc: 'Get bamboozled 3 times in one run and survive', reward: 'trail', rewardTrail: 7 }
+  'bamboozled-3': { name: 'Bamboozle Survivor', desc: 'Get bamboozled 3 times in one run and survive', reward: 'trail', rewardTrail: 7 },
+  'leaderboard-1': { name: 'Champion', desc: 'Reach #1 on the leaderboard', reward: 'skin', rewardSkin: 10 }
 };
 function getAchievements() {
   try { return JSON.parse(localStorage.getItem('geoflyer-achievements') || '{}'); }
@@ -370,8 +371,7 @@ async function submitScore(name, score) {
       document.getElementById('deathRank').textContent = '#' + data.rank + ' on leaderboard!';
       document.getElementById('deathRank').style.display = 'block';
       if (data.rank === 1) {
-        const skins = getUnlockedSkins();
-        if (!skins.includes(10)) { skins.push(10); localStorage.setItem('geoflyer-unlocked', JSON.stringify(skins)); }
+        grantAchievement('leaderboard-1');
         const trails = getUnlockedTrails();
         if (!trails.includes(8)) { trails.push(8); localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify(trails)); }
       }
