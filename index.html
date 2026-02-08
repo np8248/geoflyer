@@ -137,6 +137,28 @@ h2 {
   transition: background 0.4s;
 }
 #skinOverlay.open { display: flex; }
+#achOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 100;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(10, 10, 30, 0.95);
+}
+#achOverlay.open { display: flex; }
+#trailOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 100;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(10, 10, 30, 0.95);
+}
+#trailOverlay.open { display: flex; }
 
 .skin-picker {
   display: flex;
@@ -252,7 +274,12 @@ h2 {
     </a>
   </div>
 
-  <button class="skin-btn" onclick="document.getElementById('skinOverlay').classList.add('open')">Skins</button>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+    <button class="skin-btn" onclick="document.getElementById('skinOverlay').classList.add('open')">Skins</button>
+    <button class="skin-btn" onclick="document.getElementById('trailOverlay').classList.add('open')">Trails</button>
+    <button class="skin-btn" onclick="document.getElementById('achOverlay').classList.add('open')">Achievements</button>
+  </div>
+  <div id="menuCoins" style="margin-top:6px;color:#ffd600;font-size:14px;text-shadow:0 0 8px #ffd600;">&#9733; 0 coins</div>
 
   <div class="controls-hint">
     <span class="kbd">Space</span> / <span class="kbd">Click</span> Hold to fly up, release to fall<br>
@@ -261,6 +288,12 @@ h2 {
     <span class="kbd">R</span> Restart &nbsp;
     <span class="kbd">H</span> Hitboxes &nbsp;
     <span class="kbd">C</span> Cycle Skin
+  </div>
+  <div style="margin-top:12px;display:flex;gap:12px;align-items:center;">
+    <button style="background:rgba(255,50,50,0.12);border:1px solid #c33;border-radius:6px;color:#f66;font-size:11px;padding:4px 10px;cursor:pointer;font-family:'Arial',sans-serif;" onclick="if(confirm('Reset ALL progress? Coins, skins, achievements, trails, and high score will be lost.')){localStorage.removeItem('geoflyer-coins');localStorage.removeItem('geoflyer-unlocked');localStorage.removeItem('geoflyer-achievements');localStorage.removeItem('geoflyer-unlocked-trails');localStorage.removeItem('geoflyer-skin');localStorage.removeItem('geoflyer-trail');localStorage.removeItem('geoflyer-streak-skin');localStorage.removeItem('geoflyer-streak-count');localStorage.removeItem('endless-high');location.reload();}">Reset Progress</button>
+    <label style="color:#666;font-size:12px;cursor:pointer;">
+      <input type="checkbox" id="debugUnlockAll" style="cursor:pointer;vertical-align:middle;"> Unlock All (Debug)
+    </label>
   </div>
 </div>
 
@@ -355,16 +388,81 @@ draw();
     </div>
     <button class="skin-arrow" id="skinNext">&#9654;</button>
   </div>
+  <div id="skinDots" style="display:flex;gap:6px;margin-top:10px;justify-content:center;align-items:center;"></div>
+  <div id="coinDisplay" style="color:#ffd600;font-size:16px;margin-top:8px;text-shadow:0 0 8px #ffd600;">&#9733; 0 coins</div>
+  <div id="skinStatus" style="color:#ff6666;font-size:15px;margin-top:4px;min-height:20px;"></div>
+  <button id="unlockBtn" style="display:none;margin-top:6px;padding:8px 28px;background:rgba(255,214,0,0.15);border:2px solid #ffd600;border-radius:10px;color:#ffd600;font-size:15px;cursor:pointer;font-family:'Arial',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='rgba(255,214,0,0.3)'" onmouseout="this.style.background='rgba(255,214,0,0.15)'">Unlock</button>
   <button class="skin-back" onclick="document.getElementById('skinOverlay').classList.remove('open')">Back</button>
+</div>
+
+<div id="achOverlay">
+  <button class="skin-close-x" onclick="document.getElementById('achOverlay').classList.remove('open')">&times;</button>
+  <div style="color:#fff;font-size:28px;font-weight:bold;text-shadow:0 0 20px rgba(0,0,0,0.5);margin-bottom:20px;">Achievements</div>
+  <div id="achList" style="display:flex;flex-direction:column;gap:12px;max-width:400px;width:90%;"></div>
+  <button class="skin-back" onclick="document.getElementById('achOverlay').classList.remove('open')" style="margin-top:24px;">Back</button>
+</div>
+
+<div id="trailOverlay">
+  <button class="skin-close-x" onclick="document.getElementById('trailOverlay').classList.remove('open')">&times;</button>
+  <div style="color:#fff;font-size:28px;font-weight:bold;text-shadow:0 0 20px rgba(0,0,0,0.5);margin-bottom:6px;">Trail Select</div>
+  <div id="trailName" style="color:rgba(255,255,255,0.6);font-size:18px;margin-bottom:16px;"></div>
+  <div style="display:flex;align-items:center;gap:20px;">
+    <button class="skin-arrow" id="trailPrev">&#9664;</button>
+    <canvas id="trailCanvas" width="200" height="80" style="background:rgba(0,0,0,0.4);border-radius:10px;"></canvas>
+    <button class="skin-arrow" id="trailNext">&#9654;</button>
+  </div>
+  <div id="trailDots" style="display:flex;gap:6px;margin-top:10px;justify-content:center;align-items:center;"></div>
+  <button class="skin-back" onclick="document.getElementById('trailOverlay').classList.remove('open')" style="margin-top:20px;">Back</button>
 </div>
 
 <script>
 (function() {
-  const SKIN_NAMES = ['Sci-fi', 'Neon Racer', 'Classic', 'Rocket', 'Phoenix', 'Stealth', 'Ice Crystal'];
+  const SKIN_NAMES = ['Sci-fi', 'Neon Racer', 'Classic', 'Space Shuttle', 'Phoenix', 'Pirate Ship', 'Ice Crystal', 'Seagull', 'Dolphin', 'Shooting Star'];
   // Full-screen overlay backgrounds per skin (saturated like GD)
-  const SKIN_BG = ['#0c1a3a', '#2e0a4a', '#0a3020', '#3a1010', '#3a1a00', '#0a0a12', '#0a1a2e'];
+  const SKIN_BG = ['#0c1a3a', '#2e0a4a', '#0a3020', '#0c1020', '#3a1a00', '#1a0e00', '#0a1a2e', '#0a2a3a', '#0a1a30', '#1a0a30'];
   const PW = 240, PH = 190;
   let activeSkin = parseInt(localStorage.getItem('geoflyer-skin') || '0');
+
+  // Unlock system
+  const FREE_SKINS = [0,1,2,3];
+  const SKIN_COSTS = {4:50, 5:100, 6:150, 7:200, 8:250};
+  // Achievement-locked skins (no coin cost)
+  const ACHIEVEMENT_SKINS = {9: {achId: 'survive-1000m', desc: 'Survive 1000 meters'}};
+  function getAchievements() {
+    try { return JSON.parse(localStorage.getItem('geoflyer-achievements') || '{}'); }
+    catch(e) { return {}; }
+  }
+  function hasAchievement(id) { return !!getAchievements()[id]; }
+  // Initialize default unlocks if missing
+  if (!localStorage.getItem('geoflyer-unlocked')) localStorage.setItem('geoflyer-unlocked', JSON.stringify([0,1,2,3]));
+  if (!localStorage.getItem('geoflyer-coins')) localStorage.setItem('geoflyer-coins', '0');
+  function getUnlockedSkins() {
+    try { return JSON.parse(localStorage.getItem('geoflyer-unlocked') || '[0,1,2,3]'); }
+    catch(e) { return [0,1,2,3]; }
+  }
+  function isSkinUnlocked(idx) { return FREE_SKINS.includes(idx) || getUnlockedSkins().includes(idx); }
+  function getCoins() { return parseInt(localStorage.getItem('geoflyer-coins') || '0'); }
+  function unlockSkin(idx) {
+    const cost = SKIN_COSTS[idx];
+    if (!cost || isSkinUnlocked(idx)) return;
+    let coins = getCoins();
+    if (coins < cost) return;
+    coins -= cost;
+    localStorage.setItem('geoflyer-coins', coins);
+    const unlocked = getUnlockedSkins();
+    if (!unlocked.includes(idx)) { unlocked.push(idx); localStorage.setItem('geoflyer-unlocked', JSON.stringify(unlocked)); }
+    updateCoinDisplay();
+    drawPreview();
+  }
+  function updateCoinDisplay() {
+    const coins = getCoins();
+    const txt = '\u2733 ' + coins + ' coins';
+    document.getElementById('coinDisplay').textContent = txt;
+    document.getElementById('menuCoins').textContent = txt;
+  }
+  // Validate active skin on load — reset to 0 if locked
+  if (!isSkinUnlocked(activeSkin)) { activeSkin = 0; localStorage.setItem('geoflyer-skin', '0'); }
+  updateCoinDisplay();
 
   function drawPreview() {
     const skinIdx = activeSkin;
@@ -381,38 +479,56 @@ draw();
     const now = Date.now();
 
     switch (skinIdx) {
-      case 0: { // Sci-fi
+      case 0: { // Sci-fi - twin engine, layered hull, energy lines
         const ft = now * 0.008;
-        for (let i = 0; i < 8; i++) {
-          const fx = -S/2 - 10 - i * 8 + Math.sin(ft + i) * 3;
-          const fy = (Math.sin(ft * 1.3 + i * 2)) * 5;
-          const sz = 7 - i * 0.7;
-          ctx.globalAlpha = 0.7 - i * 0.08;
-          ctx.fillStyle = i < 4 ? '#ff6600' : '#ffcc00';
-          ctx.beginPath(); ctx.arc(fx, fy, Math.max(1, sz), 0, Math.PI * 2); ctx.fill();
+        // Twin plasma trail
+        for (let i = 0; i < 10; i++) {
+          const fx = -S/2 - 8 - i * 8;
+          ctx.globalAlpha = 0.6 - i * 0.055;
+          ctx.fillStyle = i < 3 ? '#66ffff' : (i < 6 ? '#0088ff' : '#4400cc');
+          ctx.beginPath(); ctx.arc(fx+Math.sin(ft+i)*3, -S/6+Math.sin(ft*1.5+i)*3, Math.max(1,7-i*0.5), 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.arc(fx+Math.sin(ft+i+2)*3, S/6+Math.sin(ft*1.5+i+1)*3, Math.max(1,7-i*0.5), 0, Math.PI*2); ctx.fill();
         }
         ctx.globalAlpha = 1;
-        const glow = 6 + Math.sin(now * 0.005) * 3;
-        ctx.save(); ctx.shadowColor = '#0ff'; ctx.shadowBlur = 15;
-        ctx.fillStyle = '#0ff'; ctx.globalAlpha = 0.6;
-        ctx.beginPath(); ctx.arc(-S/2 + 3, 0, glow, 0, Math.PI * 2); ctx.fill();
-        ctx.restore(); ctx.globalAlpha = 1;
+        // Twin engine glow
+        ctx.save(); ctx.shadowColor = '#0ff'; ctx.shadowBlur = 16;
+        ctx.fillStyle = '#66ffff';
+        ctx.beginPath(); ctx.arc(-S/2+2, -S/6, 5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-S/2+2, S/6, 5, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+        // Hull
         ctx.fillStyle = '#1a1a2e';
         ctx.beginPath();
-        ctx.moveTo(S/2 + 8, 0); ctx.lineTo(S/6, -S/2 + 3);
-        ctx.lineTo(-S/2, -S/3); ctx.lineTo(-S/2, S/3);
-        ctx.lineTo(S/6, S/2 - 3); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#12122a';
-        ctx.beginPath(); ctx.moveTo(S/6, -S/2 + 3); ctx.lineTo(-S/4, -S/4); ctx.lineTo(-S/2 - 3, -S/2 + 10); ctx.closePath(); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(S/6, S/2 - 3); ctx.lineTo(-S/4, S/4); ctx.lineTo(-S/2 - 3, S/2 - 10); ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = '#0ff'; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(S/2 + 4, 0); ctx.lineTo(-S/2 + 6, 0); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(S/4, -3); ctx.lineTo(-S/6, -S/3 + 6); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(S/4, 3); ctx.lineTo(-S/6, S/3 - 6); ctx.stroke();
-        ctx.fillStyle = '#0af';
-        ctx.beginPath(); ctx.ellipse(S/6, 0, 7, 5, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.beginPath(); ctx.ellipse(S/6 + 2, -1.5, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.moveTo(S/2+8, 0);
+        ctx.quadraticCurveTo(S/2+4, -S/3, S/6, -S/3);
+        ctx.lineTo(-S/3, -S/3); ctx.lineTo(-S/2, -S/5);
+        ctx.lineTo(-S/2, S/5); ctx.lineTo(-S/3, S/3);
+        ctx.lineTo(S/6, S/3);
+        ctx.quadraticCurveTo(S/2+4, S/3, S/2+8, 0);
+        ctx.closePath(); ctx.fill();
+        // Upper panel
+        ctx.fillStyle = '#242448';
+        ctx.beginPath();
+        ctx.moveTo(S/2+5, -1); ctx.quadraticCurveTo(S/2, -S/3+3, S/6, -S/3+3);
+        ctx.lineTo(-S/4, -S/3+3); ctx.lineTo(-S/4, -1);
+        ctx.closePath(); ctx.fill();
+        // Swept wings
+        ctx.fillStyle = '#141430';
+        ctx.beginPath(); ctx.moveTo(0, -S/3); ctx.lineTo(-S/4, -S/2-3); ctx.lineTo(-S/2-3, -S/3); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0, S/3); ctx.lineTo(-S/4, S/2+3); ctx.lineTo(-S/2-3, S/3); ctx.closePath(); ctx.fill();
+        // Energy lines
+        const pulse0 = 0.6 + Math.sin(ft*3)*0.3;
+        ctx.strokeStyle = `rgba(0,255,255,${pulse0})`; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(S/2+4, 0); ctx.lineTo(-S/3, 0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(S/4, -S/6); ctx.lineTo(-S/4, -S/3+3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(S/4, S/6); ctx.lineTo(-S/4, S/3-3); ctx.stroke();
+        // Cockpit dome
+        ctx.save(); ctx.shadowColor = '#0af'; ctx.shadowBlur = 8;
+        const cg = ctx.createRadialGradient(S/5, -1, 2, S/5, 0, 8);
+        cg.addColorStop(0, '#ffffff'); cg.addColorStop(0.4, '#44ddff'); cg.addColorStop(1, '#0066aa');
+        ctx.fillStyle = cg;
+        ctx.beginPath(); ctx.ellipse(S/5, 0, 8, 6, 0, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
         break;
       }
       case 1: { // Neon Racer
@@ -465,47 +581,64 @@ draw();
         ctx.fillStyle = '#000'; ctx.fillRect(2, -5, 8, 8);
         break;
       }
-      case 3: { // Rocket
+      case 3: { // Space Shuttle
         const rt = now * 0.01;
+        // Engine exhaust - blue-white plasma
         for (let i = 0; i < 10; i++) {
-          const fx = -S/2 - 8 - i * 7 + Math.sin(rt * 2 + i * 1.3) * 4;
-          const fy = Math.sin(rt + i * 0.8) * 6;
-          const sz = 8 - i * 0.7;
-          ctx.globalAlpha = 0.8 - i * 0.07;
-          ctx.fillStyle = i < 5 ? '#ff6600' : '#ffcc00';
+          const fx = -S/2 - 6 - i * 6 + Math.sin(rt * 2 + i * 1.3) * 2;
+          const fy = Math.sin(rt + i * 0.8) * 3;
+          const sz = 5 - i * 0.4;
+          ctx.globalAlpha = 0.7 - i * 0.06;
+          ctx.fillStyle = i < 3 ? '#ccddff' : (i < 6 ? '#6688ff' : '#3344aa');
           ctx.beginPath(); ctx.arc(fx, fy, Math.max(1, sz), 0, Math.PI * 2); ctx.fill();
         }
         ctx.globalAlpha = 1;
-        ctx.fillStyle = '#cc2222';
+        // Engine pods (top and bottom)
+        ctx.fillStyle = '#555566';
+        ctx.fillRect(-S/2 - 3, -S/3 - 2, S/4, 5);
+        ctx.fillRect(-S/2 - 3, S/3 - 3, S/4, 5);
+        ctx.fillStyle = '#6688ff';
+        ctx.beginPath(); ctx.arc(-S/2, -S/3, 2.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-S/2, S/3, 2.5, 0, Math.PI*2); ctx.fill();
+        // Main fuselage - metallic silver/gray
+        const fGrd = ctx.createLinearGradient(0, -S/3, 0, S/3);
+        fGrd.addColorStop(0, '#aaaabb'); fGrd.addColorStop(0.4, '#dddde8'); fGrd.addColorStop(0.6, '#ccccdd'); fGrd.addColorStop(1, '#888899');
+        ctx.fillStyle = fGrd;
         ctx.beginPath();
-        ctx.moveTo(S/2 + 5, 0);
-        ctx.quadraticCurveTo(S/2 + 8, -S/3, S/6, -S/3);
-        ctx.lineTo(-S/2, -S/3); ctx.lineTo(-S/2, S/3);
-        ctx.lineTo(S/6, S/3);
-        ctx.quadraticCurveTo(S/2 + 8, S/3, S/2 + 5, 0);
+        ctx.moveTo(S/2 + 4, 0);
+        ctx.quadraticCurveTo(S/2 + 2, -S/4, S/6, -S/4);
+        ctx.lineTo(-S/2, -S/4);
+        ctx.lineTo(-S/2, S/4);
+        ctx.lineTo(S/6, S/4);
+        ctx.quadraticCurveTo(S/2 + 2, S/4, S/2 + 4, 0);
         ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.fillRect(-S/4, -S/3 + 3, S/3, S*2/3 - 6);
-        ctx.fillStyle = '#ee4444';
+        // Delta wings
+        ctx.fillStyle = '#777788';
+        ctx.beginPath(); ctx.moveTo(-S/6, -S/4); ctx.lineTo(-S/3, -S/2 - 1); ctx.lineTo(-S/2, -S/4); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-S/6, S/4); ctx.lineTo(-S/3, S/2 + 1); ctx.lineTo(-S/2, S/4); ctx.closePath(); ctx.fill();
+        // Fuselage seam line
+        ctx.strokeStyle = '#666677'; ctx.lineWidth = 0.8;
+        ctx.beginPath(); ctx.moveTo(S/3, 0); ctx.lineTo(-S/2 + 2, 0); ctx.stroke();
+        // Cockpit windshield
+        ctx.save(); ctx.shadowColor = '#aaddff'; ctx.shadowBlur = 5;
+        const wg = ctx.createLinearGradient(S/4, -3, S/4, 3);
+        wg.addColorStop(0, '#cceeff'); wg.addColorStop(1, '#6699cc');
+        ctx.fillStyle = wg;
         ctx.beginPath();
-        ctx.moveTo(S/2 + 3, 0);
-        ctx.quadraticCurveTo(S/2 + 5, -S/4, S/6, -S/4);
-        ctx.lineTo(S/6, 0); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#991111';
-        ctx.beginPath(); ctx.moveTo(-S/2, -S/3); ctx.lineTo(-S/2 - 8, -S/2 - 4); ctx.lineTo(-S/3, -S/3); ctx.closePath(); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(-S/2, S/3); ctx.lineTo(-S/2 - 8, S/2 + 4); ctx.lineTo(-S/3, S/3); ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = '#661111'; ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(S/2 + 5, 0);
-        ctx.quadraticCurveTo(S/2 + 8, -S/3, S/6, -S/3);
-        ctx.lineTo(-S/2, -S/3); ctx.lineTo(-S/2, S/3); ctx.lineTo(S/6, S/3);
-        ctx.quadraticCurveTo(S/2 + 8, S/3, S/2 + 5, 0);
-        ctx.closePath(); ctx.stroke();
-        ctx.save(); ctx.shadowColor = '#adf'; ctx.shadowBlur = 8;
-        ctx.fillStyle = '#aaddff';
-        ctx.beginPath(); ctx.arc(S/8, 0, 8, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.beginPath(); ctx.arc(S/8 + 2, -2, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.moveTo(S/2 + 2, 0);
+        ctx.quadraticCurveTo(S/2, -S/6, S/4, -S/6);
+        ctx.lineTo(S/4, S/6);
+        ctx.quadraticCurveTo(S/2, S/6, S/2 + 2, 0);
+        ctx.closePath(); ctx.fill();
         ctx.restore();
+        // Outline
+        ctx.strokeStyle = '#555566'; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 4, 0);
+        ctx.quadraticCurveTo(S/2 + 2, -S/4, S/6, -S/4);
+        ctx.lineTo(-S/2, -S/4); ctx.lineTo(-S/2, S/4); ctx.lineTo(S/6, S/4);
+        ctx.quadraticCurveTo(S/2 + 2, S/4, S/2 + 4, 0);
+        ctx.closePath(); ctx.stroke();
         break;
       }
       case 4: { // Phoenix
@@ -552,38 +685,67 @@ draw();
         ctx.beginPath(); ctx.ellipse(S/6 + 2, -1.5, 3, 1.5, 0, 0, Math.PI * 2); ctx.fill();
         break;
       }
-      case 5: { // Stealth
+      case 5: { // Pirate Ship
         const st = now * 0.005;
-        // Faint smoke wisps
+        // Cannonball trail
         for (let i = 0; i < 6; i++) {
-          ctx.globalAlpha = 0.12 - i * 0.015;
-          ctx.fillStyle = '#222';
-          const sx2 = -S/2 - 8 - i * 12;
-          const sy2 = Math.sin(st + i * 0.9) * 5;
-          ctx.fillRect(sx2, sy2 - 4, 10, 8);
+          const seed = i * 97.3;
+          const age = (st * 0.5 + seed) % 3;
+          const fx = -S/2 - 8 - age * 16;
+          const fy = age * age * 2 + Math.sin(seed) * 3;
+          ctx.globalAlpha = 0.5 - age * 0.15;
+          ctx.fillStyle = '#333';
+          ctx.beginPath(); ctx.arc(fx, fy, 3 - age * 0.5, 0, Math.PI*2); ctx.fill();
         }
         ctx.globalAlpha = 1;
-        // Flat wedge body
-        ctx.fillStyle = '#111118';
+        // Wooden hull body
+        const hGrd = ctx.createLinearGradient(0, -S/3, 0, S/3);
+        hGrd.addColorStop(0, '#8B6914'); hGrd.addColorStop(0.5, '#A0772B'); hGrd.addColorStop(1, '#6B4F10');
+        ctx.fillStyle = hGrd;
         ctx.beginPath();
-        ctx.moveTo(S/2 + 5, 0);
-        ctx.lineTo(S/6, -S/2 + 6); ctx.lineTo(-S/2, -S/4);
-        ctx.lineTo(-S/2, S/4); ctx.lineTo(S/6, S/2 - 6);
+        ctx.moveTo(S/2 + 3, 0);
+        ctx.quadraticCurveTo(S/2 + 1, -S/3, S/8, -S/3);
+        ctx.lineTo(-S/2, -S/4);
+        ctx.lineTo(-S/2 - 2, 0);
+        ctx.lineTo(-S/2, S/4);
+        ctx.lineTo(S/8, S/3);
+        ctx.quadraticCurveTo(S/2 + 1, S/3, S/2 + 3, 0);
         ctx.closePath(); ctx.fill();
-        // Angular wings
-        ctx.fillStyle = '#0d0d14';
-        ctx.beginPath(); ctx.moveTo(S/6, -S/2 + 6); ctx.lineTo(-S/6, -S/6); ctx.lineTo(-S/2 - 6, -S/2 + 10); ctx.closePath(); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(S/6, S/2 - 6); ctx.lineTo(-S/6, S/6); ctx.lineTo(-S/2 - 6, S/2 - 10); ctx.closePath(); ctx.fill();
-        // Dark red accent lines
-        ctx.strokeStyle = '#551111'; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(S/2 + 2, 0); ctx.lineTo(-S/2 + 6, 0); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(S/4, -3); ctx.lineTo(-S/6, -S/4 + 4); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(S/4, 3); ctx.lineTo(-S/6, S/4 - 4); ctx.stroke();
-        // Red engine glow
-        ctx.save(); ctx.shadowColor = '#660000'; ctx.shadowBlur = 8;
-        ctx.fillStyle = '#882222';
-        ctx.beginPath(); ctx.arc(-S/2 + 3, 0, 4, 0, Math.PI * 2); ctx.fill();
-        ctx.restore();
+        // Plank lines
+        ctx.strokeStyle = '#5a3a08'; ctx.lineWidth = 0.7;
+        for (let i = -2; i <= 2; i++) {
+          ctx.beginPath(); ctx.moveTo(-S/3, i * S/7); ctx.lineTo(S/3, i * S/7); ctx.stroke();
+        }
+        // Sail (mast sticking up)
+        ctx.fillStyle = '#eee8d0';
+        ctx.beginPath(); ctx.moveTo(-S/8, -S/3); ctx.lineTo(S/8, -S/2 - 3); ctx.lineTo(S/4, -S/3); ctx.closePath(); ctx.fill();
+        // Skull on sail
+        ctx.fillStyle = '#333';
+        ctx.beginPath(); ctx.arc(S/12, -S/3 - 4, 2, 0, Math.PI*2); ctx.fill();
+        // Bottom keel sail
+        ctx.fillStyle = '#eee8d0';
+        ctx.beginPath(); ctx.moveTo(-S/8, S/3); ctx.lineTo(S/8, S/2 + 3); ctx.lineTo(S/4, S/3); ctx.closePath(); ctx.fill();
+        // Cannon holes
+        ctx.fillStyle = '#222';
+        ctx.beginPath(); ctx.arc(-S/6, -S/5, 2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(S/8, -S/5, 2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-S/6, S/5, 2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(S/8, S/5, 2, 0, Math.PI*2); ctx.fill();
+        // Outline
+        ctx.strokeStyle = '#4a2a00'; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 3, 0);
+        ctx.quadraticCurveTo(S/2 + 1, -S/3, S/8, -S/3);
+        ctx.lineTo(-S/2, -S/4); ctx.lineTo(-S/2 - 2, 0); ctx.lineTo(-S/2, S/4);
+        ctx.lineTo(S/8, S/3);
+        ctx.quadraticCurveTo(S/2 + 1, S/3, S/2 + 3, 0);
+        ctx.closePath(); ctx.stroke();
+        // Jolly roger flag at back
+        const wave = Math.sin(st * 2) * 2;
+        ctx.fillStyle = '#111';
+        ctx.fillRect(-S/2 - 1, -3 + wave, 8, 6);
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(-S/2 + 3, wave, 1.5, 0, Math.PI*2); ctx.fill();
         break;
       }
       case 6: { // Ice Crystal
@@ -629,9 +791,212 @@ draw();
         ctx.globalAlpha = 1;
         break;
       }
+      case 7: { // Seagull
+        const gt = now * 0.006;
+        // White wisp trail
+        for (let i = 0; i < 8; i++) {
+          const fx = -S/2 - 8 - i * 8 + Math.sin(gt * 1.3 + i * 1.5) * 4;
+          const fy = Math.sin(gt * 1.6 + i * 1.2) * 7;
+          const sz = 4.5 - i * 0.45;
+          ctx.globalAlpha = 0.45 - i * 0.05;
+          ctx.fillStyle = '#ddeeff';
+          ctx.beginPath(); ctx.arc(fx, fy, Math.max(0.5, sz), 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        // White feathered body
+        ctx.fillStyle = '#eef4f8';
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 8, 0);
+        ctx.lineTo(S/6, -S/2 + 3);
+        ctx.lineTo(-S/2, -S/3);
+        ctx.lineTo(-S/2, S/3);
+        ctx.lineTo(S/6, S/2 - 3);
+        ctx.closePath(); ctx.fill();
+        // Gray wing tips
+        ctx.fillStyle = '#8899aa';
+        ctx.beginPath(); ctx.moveTo(S/6, -S/2 + 3); ctx.lineTo(-S/6, -S/4); ctx.lineTo(-S/2 - 8, -S/2 + 4); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(S/6, S/2 - 3); ctx.lineTo(-S/6, S/4); ctx.lineTo(-S/2 - 8, S/2 - 4); ctx.closePath(); ctx.fill();
+        // Orange beak at nose
+        ctx.fillStyle = '#ee8833';
+        ctx.beginPath(); ctx.moveTo(S/2 + 8, 0); ctx.lineTo(S/3, -4); ctx.lineTo(S/3, 4); ctx.closePath(); ctx.fill();
+        // Dark eye
+        ctx.fillStyle = '#222';
+        ctx.beginPath(); ctx.arc(S/5, -3, 3.5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(S/5 + 1, -3.5, 1.2, 0, Math.PI * 2); ctx.fill();
+        break;
+      }
+      case 8: { // Dolphin
+        const dt = now * 0.007;
+        // Water droplet trail
+        for (let i = 0; i < 8; i++) {
+          const fx = -S/2 - 8 - i * 8 + Math.sin(dt * 1.4 + i * 1.8) * 4;
+          const fy = Math.sin(dt * 2.0 + i * 1.3) * 8;
+          const sz = 4 - i * 0.4;
+          ctx.globalAlpha = 0.5 - i * 0.055;
+          ctx.fillStyle = i % 2 === 0 ? '#66bbee' : '#aaddff';
+          ctx.beginPath(); ctx.arc(fx, fy, Math.max(0.5, sz), 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        // Smooth curved blue-gray body
+        const dgrd = ctx.createLinearGradient(0, -S/2, 0, S/2);
+        dgrd.addColorStop(0, '#5588aa'); dgrd.addColorStop(0.5, '#88bbcc'); dgrd.addColorStop(1, '#ccddee');
+        ctx.fillStyle = dgrd;
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 8, 0);
+        ctx.quadraticCurveTo(S/2 + 4, -S/3, S/6, -S/3);
+        ctx.lineTo(-S/2, -S/4);
+        ctx.lineTo(-S/2, S/4);
+        ctx.lineTo(S/6, S/3);
+        ctx.quadraticCurveTo(S/2 + 4, S/3, S/2 + 8, 0);
+        ctx.closePath(); ctx.fill();
+        // Lighter belly
+        ctx.fillStyle = 'rgba(220,238,248,0.35)';
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 4, 2);
+        ctx.quadraticCurveTo(S/3, S/3 - 2, -S/3, S/4);
+        ctx.lineTo(-S/3, 2);
+        ctx.closePath(); ctx.fill();
+        // Dorsal fin
+        ctx.fillStyle = '#4477aa';
+        ctx.beginPath(); ctx.moveTo(0, -S/3); ctx.lineTo(-S/8, -S/2 - 5); ctx.lineTo(-S/4, -S/3); ctx.closePath(); ctx.fill();
+        // Tail fluke
+        ctx.fillStyle = '#5588aa';
+        ctx.beginPath(); ctx.moveTo(-S/2, -S/4); ctx.lineTo(-S/2 - 10, -S/3 - 5); ctx.lineTo(-S/3, -S/5); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-S/2, S/4); ctx.lineTo(-S/2 - 10, S/3 + 5); ctx.lineTo(-S/3, S/5); ctx.closePath(); ctx.fill();
+        // Eye
+        ctx.fillStyle = '#224';
+        ctx.beginPath(); ctx.arc(S/5, -3, 3.5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(S/5 + 1, -3.5, 1.2, 0, Math.PI * 2); ctx.fill();
+        break;
+      }
+      case 9: { // Shooting Star
+        const st2 = now * 0.008;
+        // Long rainbow/gold sparkle trail
+        for (let i = 0; i < 12; i++) {
+          const fx = -S/2 - 8 - i * 8 + Math.sin(st2 + i * 0.8) * 3;
+          const fy = Math.sin(st2 * 1.5 + i * 1.2) * 6;
+          const sz = 5 - i * 0.35;
+          ctx.globalAlpha = 0.7 - i * 0.055;
+          const hue2 = (st2 * 40 + i * 30) % 360;
+          ctx.fillStyle = `hsl(${hue2}, 90%, 65%)`;
+          ctx.beginPath(); ctx.arc(fx, fy, Math.max(0.5, sz), 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        // Radiating glow
+        ctx.save();
+        ctx.shadowColor = '#ffdd44'; ctx.shadowBlur = 22;
+        // Golden-white pointed star shape
+        ctx.fillStyle = '#ffe866';
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 10, 0);
+        ctx.lineTo(S/8, -S/6);
+        ctx.lineTo(0, -S/2);
+        ctx.lineTo(-S/8, -S/6);
+        ctx.lineTo(-S/2, -S/5);
+        ctx.lineTo(-S/5, 0);
+        ctx.lineTo(-S/2, S/5);
+        ctx.lineTo(-S/8, S/6);
+        ctx.lineTo(0, S/2);
+        ctx.lineTo(S/8, S/6);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+        // White glow overlay
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 6, 0); ctx.lineTo(S/8, -S/8); ctx.lineTo(-S/6, 0); ctx.lineTo(S/8, S/8);
+        ctx.closePath(); ctx.fill();
+        // Sparkle accents
+        const sp2 = Math.sin(st2 * 3) * 0.3 + 0.7;
+        ctx.globalAlpha = sp2;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(S/6, -S/5, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-S/6, S/5, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(S/4, S/8, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+        break;
+      }
     }
     ctx.restore();
+
+    // Lock overlay for locked skins
+    const locked = !isSkinUnlocked(skinIdx);
+    if (locked) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(0, 0, PW, PH);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 40px Arial';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('\uD83D\uDD12', PW/2, PH/2);
+      ctx.restore();
+    }
+
     document.getElementById('skinName').textContent = SKIN_NAMES[skinIdx];
+
+    // Update dot indicators
+    const dotsEl = document.getElementById('skinDots');
+    if (dotsEl.children.length !== SKIN_NAMES.length) {
+      dotsEl.innerHTML = '';
+      for (let i = 0; i < SKIN_NAMES.length; i++) {
+        const dot = document.createElement('div');
+        dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.25);transition:all 0.15s;cursor:pointer;';
+        dot.addEventListener('click', () => { selectSkin(i); });
+        dotsEl.appendChild(dot);
+      }
+    }
+    for (let i = 0; i < dotsEl.children.length; i++) {
+      const dot = dotsEl.children[i];
+      const isCurrent = i === parseInt(localStorage.getItem('geoflyer-skin') || '0');
+      const isViewing = i === skinIdx;
+      if (isViewing) {
+        dot.style.background = '#fff';
+        dot.style.transform = 'scale(1.3)';
+        dot.style.boxShadow = '0 0 6px rgba(255,255,255,0.6)';
+      } else if (isCurrent) {
+        dot.style.background = '#0af';
+        dot.style.transform = 'scale(1.1)';
+        dot.style.boxShadow = '0 0 4px rgba(0,170,255,0.5)';
+      } else {
+        dot.style.background = 'rgba(255,255,255,0.25)';
+        dot.style.transform = 'scale(1)';
+        dot.style.boxShadow = 'none';
+      }
+    }
+
+    // Update status text and unlock button
+    const statusEl = document.getElementById('skinStatus');
+    const unlockEl = document.getElementById('unlockBtn');
+    if (locked) {
+      const achInfo = ACHIEVEMENT_SKINS[skinIdx];
+      if (achInfo) {
+        statusEl.textContent = 'Achievement: ' + achInfo.desc;
+        statusEl.style.color = '#ffaa44';
+        unlockEl.style.display = 'none';
+      } else {
+        const cost = SKIN_COSTS[skinIdx] || 0;
+        const coins = getCoins();
+        statusEl.textContent = 'Locked \u2014 ' + cost + ' coins';
+        statusEl.style.color = '#ff6666';
+        unlockEl.style.display = 'inline-block';
+        unlockEl.textContent = '\uD83D\uDD13 Unlock (' + cost + ' coins)';
+        if (coins < cost) {
+          unlockEl.style.opacity = '0.4';
+          unlockEl.style.cursor = 'not-allowed';
+          unlockEl.onclick = null;
+        } else {
+          unlockEl.style.opacity = '1';
+          unlockEl.style.cursor = 'pointer';
+          unlockEl.onclick = function() { unlockSkin(skinIdx); };
+        }
+      }
+    } else {
+      statusEl.textContent = activeSkin === parseInt(localStorage.getItem('geoflyer-skin')) ? '' : '';
+      statusEl.style.color = '#66ff66';
+      unlockEl.style.display = 'none';
+    }
+    updateCoinDisplay();
   }
 
   function animLoop() {
@@ -643,13 +1008,279 @@ draw();
 
   function selectSkin(i) {
     activeSkin = ((i % SKIN_NAMES.length) + SKIN_NAMES.length) % SKIN_NAMES.length;
-    localStorage.setItem('geoflyer-skin', activeSkin);
+    // Only save to localStorage if skin is unlocked (can still browse locked skins)
+    if (isSkinUnlocked(activeSkin)) {
+      localStorage.setItem('geoflyer-skin', activeSkin);
+    }
   }
 
   document.getElementById('skinPrev').addEventListener('click', () => selectSkin(activeSkin - 1));
   document.getElementById('skinNext').addEventListener('click', () => selectSkin(activeSkin + 1));
 
   animLoop();
+
+  // Achievements list
+  const ACHIEVEMENTS = [
+    { id: 'survive-500m', name: 'Hot Streak', desc: 'Survive 500 meters', reward: 'Unlocks Fire trail' },
+    { id: 'survive-1000m', name: 'Marathon Flyer', desc: 'Survive 1000 meters', reward: 'Unlocks Shooting Star skin' },
+    { id: 'survive-2000m', name: 'Blizzard Runner', desc: 'Survive 2000 meters', reward: 'Unlocks Snow trail' },
+    { id: 'collect-25-run', name: 'Sweet Tooth', desc: 'Collect 25 coins in one run', reward: 'Unlocks Candy trail' },
+    { id: 'collect-100', name: 'Coin Hoarder', desc: 'Collect 100 coins in one run', reward: 'Unlocks Rainbow trail' },
+    { id: 'loyal-10', name: 'Loyal Flyer', desc: 'Play same skin 10 games in a row (300m+ each)', reward: 'Unlocks Skin Echo trail' }
+  ];
+  function populateAchievements() {
+    const list = document.getElementById('achList');
+    list.innerHTML = '';
+    const achs = getAchievements();
+    for (const ach of ACHIEVEMENTS) {
+      const done = !!achs[ach.id];
+      const card = document.createElement('div');
+      card.style.cssText = 'display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:12px;border:2px solid ' + (done ? '#44cc66' : '#333355') + ';background:' + (done ? 'rgba(0,255,100,0.08)' : 'rgba(20,20,50,0.8)') + ';';
+      const icon = document.createElement('div');
+      icon.style.cssText = 'font-size:28px;width:40px;text-align:center;flex-shrink:0;';
+      icon.textContent = done ? '\u2705' : '\uD83D\uDD12';
+      const info = document.createElement('div');
+      info.style.cssText = 'flex:1;';
+      const title = document.createElement('div');
+      title.style.cssText = 'color:' + (done ? '#44cc66' : '#aaa') + ';font-size:16px;font-weight:bold;';
+      title.textContent = ach.name;
+      const desc = document.createElement('div');
+      desc.style.cssText = 'color:#888;font-size:13px;margin-top:2px;';
+      desc.textContent = ach.desc;
+      const reward = document.createElement('div');
+      reward.style.cssText = 'color:#ffaa44;font-size:12px;margin-top:3px;';
+      reward.textContent = ach.reward;
+      info.appendChild(title);
+      info.appendChild(desc);
+      info.appendChild(reward);
+      card.appendChild(icon);
+      card.appendChild(info);
+      list.appendChild(card);
+    }
+  }
+  // Populate on overlay open
+  const achObs = new MutationObserver(() => {
+    if (document.getElementById('achOverlay').classList.contains('open')) populateAchievements();
+  });
+  achObs.observe(document.getElementById('achOverlay'), { attributes: true, attributeFilter: ['class'] });
+
+  // Trail selector
+  const TRAIL_NAMES = ['None','Smoke','Fire','Rainbow','Candy','Snow','Skin Echo'];
+  const TRAIL_COLORS = [
+    null,
+    ['#888888','#777777','#666666','#555555'],
+    ['#ff2200','#ff6600','#ff9900','#ffcc00'],
+    ['#ff0000','#ff8800','#ffff00','#33ff33','#0099ff','#6633ff'],
+    ['#ff44aa','#ff88cc','#88ddff','#ffee44'],
+    ['#aaddff','#cceeff','#ffffff','#ddeeff'],
+    null
+  ];
+  const FREE_TRAILS = [0, 1];
+  const TRAIL_ACHIEVEMENTS = {
+    2: {achId: 'survive-500m', desc: 'Survive 500 meters'},
+    3: {achId: 'collect-100', desc: 'Collect 100 coins in one run'},
+    4: {achId: 'collect-25-run', desc: 'Collect 25 coins in one run'},
+    5: {achId: 'survive-2000m', desc: 'Survive 2000 meters'},
+    6: {achId: 'loyal-10', desc: 'Play same skin 10 games (300m+ each)'}
+  };
+  function getUnlockedTrails() {
+    try { return JSON.parse(localStorage.getItem('geoflyer-unlocked-trails') || '[0,1]'); }
+    catch(e) { return [0,1]; }
+  }
+  function isTrailUnlocked(idx) { return FREE_TRAILS.includes(idx) || getUnlockedTrails().includes(idx); }
+  let activeTrail = parseInt(localStorage.getItem('geoflyer-trail') || '0');
+  if (!isTrailUnlocked(activeTrail)) { activeTrail = 0; localStorage.setItem('geoflyer-trail', '0'); }
+  const trailCanvas = document.getElementById('trailCanvas');
+  const trailCtx = trailCanvas.getContext('2d');
+
+  function drawTrailPreview() {
+    const w = 200, h = 80;
+    trailCtx.clearRect(0, 0, w, h);
+    const t = Date.now() * 0.008;
+    const unlocked = isTrailUnlocked(activeTrail);
+    document.getElementById('trailName').textContent = TRAIL_NAMES[activeTrail] + (unlocked ? '' : ' (Locked)');
+
+    if (activeTrail === 0) {
+      trailCtx.fillStyle = 'rgba(255,255,255,0.4)';
+      trailCtx.font = '14px Arial';
+      trailCtx.textAlign = 'center';
+      trailCtx.fillText('No trail', w/2, h/2 + 5);
+    } else if (activeTrail === 1) {
+      // Smoke — puffy expanding clouds
+      const tc = TRAIL_COLORS[1];
+      for (let i = 0; i < 14; i++) {
+        const age = (t * 0.6 + i * 0.4) % 5;
+        const fx = w - 30 - i * 12;
+        const fy = h/2 + Math.sin(t*0.5+i*0.7)*4 - age*1.5;
+        const sz = 4 + age*3 + i*0.4;
+        trailCtx.globalAlpha = Math.max(0, 0.4 - i*0.027);
+        trailCtx.fillStyle = tc[i % tc.length];
+        trailCtx.beginPath(); trailCtx.arc(fx, fy, sz, 0, Math.PI*2); trailCtx.fill();
+        trailCtx.beginPath(); trailCtx.arc(fx+4, fy-3, sz*0.6, 0, Math.PI*2); trailCtx.fill();
+      }
+      trailCtx.globalAlpha = 1;
+    } else if (activeTrail === 2) {
+      // Fire — shooting flame jet + particles
+      const grd = trailCtx.createLinearGradient(w-15, 0, 0, 0);
+      grd.addColorStop(0, 'rgba(255,255,200,0.7)');
+      grd.addColorStop(0.2, 'rgba(255,220,0,0.5)');
+      grd.addColorStop(0.5, 'rgba(255,100,0,0.3)');
+      grd.addColorStop(1, 'rgba(255,0,0,0)');
+      trailCtx.fillStyle = grd;
+      const fl = Math.sin(t*6)*3;
+      trailCtx.beginPath();
+      trailCtx.moveTo(w-15, h/2-12+fl);
+      trailCtx.lineTo(10+Math.sin(t*4)*10, h/2+fl*0.5);
+      trailCtx.lineTo(w-15, h/2+12+fl);
+      trailCtx.closePath(); trailCtx.fill();
+      for (let i = 0; i < 14; i++) {
+        const fx = w-20 - i*12 + Math.sin(t*3+i*1.1)*(3+i*0.5);
+        const fy = h/2 + Math.sin(t*4+i*1.7)*(4+i*0.8) + fl*0.3;
+        const sz = Math.max(1, 8 - i*0.45);
+        trailCtx.globalAlpha = Math.max(0, 0.8-i*0.055);
+        trailCtx.fillStyle = i<3?'#ffffcc':(i<6?'#ffcc00':(i<10?'#ff6600':'#cc2200'));
+        trailCtx.beginPath(); trailCtx.arc(fx, fy, sz, 0, Math.PI*2); trailCtx.fill();
+      }
+      trailCtx.globalAlpha = 1;
+    } else if (activeTrail === 3) {
+      // Rainbow — hue-cycling sparkles
+      for (let i = 0; i < 16; i++) {
+        const fx = w - 30 - i * 10 + Math.sin(t+i*0.8)*3;
+        const fy = h/2 + Math.sin(t*1.5+i*1.2)*12;
+        const sz = 7 - i*0.35;
+        trailCtx.globalAlpha = 0.7 - i*0.04;
+        const hue = (t * 40 + i * 30) % 360;
+        trailCtx.fillStyle = `hsl(${hue}, 90%, 65%)`;
+        trailCtx.beginPath(); trailCtx.arc(fx, fy, Math.max(1,sz), 0, Math.PI*2); trailCtx.fill();
+      }
+      trailCtx.globalAlpha = 1;
+    } else if (activeTrail === 4) {
+      // Candy — tumbling pieces falling down
+      const candyColors = ['#ff44aa','#ff88cc','#88ddff','#ffee44','#66ff66','#ff6644'];
+      for (let i = 0; i < 12; i++) {
+        const seed = i*137.5;
+        const age = (t*0.7+seed)%4;
+        const fx = w-20 - age*40;
+        const fy = h/3 + age*age*3 + Math.sin(seed)*6;
+        const sz = 6 - age*0.8;
+        const spin = t*3+seed;
+        trailCtx.globalAlpha = Math.max(0, 0.8-age*0.18);
+        trailCtx.save();
+        trailCtx.translate(fx, fy);
+        trailCtx.rotate(spin);
+        trailCtx.fillStyle = candyColors[i%candyColors.length];
+        if (i%3===0) { trailCtx.beginPath(); trailCtx.arc(0,0,sz,0,Math.PI*2); trailCtx.fill(); }
+        else if (i%3===1) { trailCtx.fillRect(-sz,-sz,sz*2,sz*2); }
+        else { trailCtx.beginPath(); for(let p=0;p<5;p++){const a=(p*4*Math.PI/5)-Math.PI/2;const r=p%2===0?sz*1.2:sz*0.5;if(p===0)trailCtx.moveTo(Math.cos(a)*r,Math.sin(a)*r);else trailCtx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}trailCtx.closePath();trailCtx.fill(); }
+        trailCtx.restore();
+      }
+      trailCtx.globalAlpha = 1;
+    } else if (activeTrail === 5) {
+      // Snow particles
+      const tc = TRAIL_COLORS[5];
+      for (let i = 0; i < 16; i++) {
+        const fx = w-30-i*10+Math.sin(t+i*1.2)*4;
+        const fy = h/2+Math.sin(t*1.5+i*0.9)*12;
+        const sz = 8-i*0.4;
+        trailCtx.globalAlpha = 0.7-i*0.04;
+        trailCtx.fillStyle = tc[i%tc.length];
+        trailCtx.beginPath(); trailCtx.arc(fx,fy,Math.max(1,sz),0,Math.PI*2); trailCtx.fill();
+      }
+      trailCtx.globalAlpha = 1;
+    } else if (activeTrail === 6) {
+      // Skin Echo — show text preview
+      trailCtx.fillStyle = 'rgba(255,255,255,0.5)';
+      trailCtx.font = '13px Arial';
+      trailCtx.textAlign = 'center';
+      trailCtx.fillText('Drops mini copies of your skin', w/2, h/2 + 5);
+    }
+
+    // Lock overlay for locked trails
+    if (!unlocked) {
+      trailCtx.fillStyle = 'rgba(0,0,0,0.5)';
+      trailCtx.fillRect(0, 0, w, h);
+      trailCtx.fillStyle = '#fff';
+      trailCtx.font = '24px Arial';
+      trailCtx.textAlign = 'center';
+      trailCtx.fillText('\uD83D\uDD12', w/2, h/2 - 5);
+      trailCtx.font = '11px Arial';
+      trailCtx.fillStyle = '#ffaa44';
+      const achInfo = TRAIL_ACHIEVEMENTS[activeTrail];
+      trailCtx.fillText(achInfo ? achInfo.desc : 'Complete achievement to unlock', w/2, h/2 + 18);
+    }
+
+    // Dots
+    const dotsEl = document.getElementById('trailDots');
+    if (dotsEl.children.length !== TRAIL_NAMES.length) {
+      dotsEl.innerHTML = '';
+      for (let i = 0; i < TRAIL_NAMES.length; i++) {
+        const dot = document.createElement('div');
+        dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.25);transition:all 0.15s;cursor:pointer;';
+        dot.addEventListener('click', () => { activeTrail = i; });
+        dotsEl.appendChild(dot);
+      }
+    }
+    for (let i = 0; i < dotsEl.children.length; i++) {
+      dotsEl.children[i].style.background = i === activeTrail ? '#fff' : 'rgba(255,255,255,0.25)';
+      dotsEl.children[i].style.transform = i === activeTrail ? 'scale(1.3)' : 'scale(1)';
+    }
+  }
+
+  function selectTrail(i) {
+    activeTrail = ((i % TRAIL_NAMES.length) + TRAIL_NAMES.length) % TRAIL_NAMES.length;
+    if (isTrailUnlocked(activeTrail)) {
+      localStorage.setItem('geoflyer-trail', activeTrail);
+    }
+  }
+  document.getElementById('trailPrev').addEventListener('click', () => selectTrail(activeTrail - 1));
+  document.getElementById('trailNext').addEventListener('click', () => selectTrail(activeTrail + 1));
+
+  // Animate trail preview
+  function trailAnimLoop() {
+    if (document.getElementById('trailOverlay').classList.contains('open')) drawTrailPreview();
+    requestAnimationFrame(trailAnimLoop);
+  }
+  trailAnimLoop();
+
+  // Debug: unlock all skins + achievements toggle
+  document.getElementById('debugUnlockAll').addEventListener('change', function() {
+    if (this.checked) {
+      sessionStorage.setItem('geoflyer-debug-backup', JSON.stringify({
+        unlocked: localStorage.getItem('geoflyer-unlocked'),
+        achievements: localStorage.getItem('geoflyer-achievements'),
+        trails: localStorage.getItem('geoflyer-unlocked-trails')
+      }));
+      sessionStorage.setItem('geoflyer-debug-active', '1');
+      const allSkins = [];
+      for (let i = 0; i < SKIN_NAMES.length; i++) allSkins.push(i);
+      localStorage.setItem('geoflyer-unlocked', JSON.stringify(allSkins));
+      const allAchs = {};
+      for (const ach of ACHIEVEMENTS) allAchs[ach.id] = {time: Date.now()};
+      localStorage.setItem('geoflyer-achievements', JSON.stringify(allAchs));
+      const allTrails = [];
+      for (let i = 0; i < TRAIL_NAMES.length; i++) allTrails.push(i);
+      localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify(allTrails));
+    } else {
+      const raw = sessionStorage.getItem('geoflyer-debug-backup');
+      if (raw) {
+        const backup = JSON.parse(raw);
+        if (backup.unlocked) localStorage.setItem('geoflyer-unlocked', backup.unlocked);
+        else localStorage.setItem('geoflyer-unlocked', JSON.stringify([0,1,2,3]));
+        if (backup.achievements) localStorage.setItem('geoflyer-achievements', backup.achievements);
+        else localStorage.removeItem('geoflyer-achievements');
+        if (backup.trails) localStorage.setItem('geoflyer-unlocked-trails', backup.trails);
+        else localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify([0,1]));
+      }
+      sessionStorage.removeItem('geoflyer-debug-backup');
+      sessionStorage.removeItem('geoflyer-debug-active');
+    }
+    drawPreview();
+    updateCoinDisplay();
+  });
+  // Restore checkbox state on load
+  if (sessionStorage.getItem('geoflyer-debug-active') === '1') {
+    document.getElementById('debugUnlockAll').checked = true;
+  }
 })();
 </script>
 </body>
