@@ -359,6 +359,17 @@ try { highScore = parseInt(localStorage.getItem('endless-high') || '0'); } catch
 
 let pendingDeathScore = 0; // stored for deathUsername flow
 
+// Dev unlock: grant everything to np8248
+(function() {
+  const u = (localStorage.getItem('geoflyer-username') || '').trim().toLowerCase();
+  if (u === 'np8248') {
+    const allSkins = [0,1,2,3,4,5,6,7,8,9,10];
+    localStorage.setItem('geoflyer-unlocked', JSON.stringify(allSkins));
+    const allTrails = [0,1,2,3,4,5,6,7,8];
+    localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify(allTrails));
+  }
+})();
+
 // Retroactive check: if player is already #1 on load, grant Champion rewards
 (async function checkLeaderboardUnlock() {
   try {

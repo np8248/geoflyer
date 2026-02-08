@@ -525,6 +525,14 @@ document.addEventListener('DOMContentLoaded', function() {
     catch(e) { return {}; }
   }
   function hasAchievement(id) { return !!getAchievements()[id]; }
+  // Dev unlock: grant everything to np8248
+  (function() {
+    const u = (localStorage.getItem('geoflyer-username') || '').trim().toLowerCase();
+    if (u === 'np8248') {
+      localStorage.setItem('geoflyer-unlocked', JSON.stringify([0,1,2,3,4,5,6,7,8,9,10]));
+      localStorage.setItem('geoflyer-unlocked-trails', JSON.stringify([0,1,2,3,4,5,6,7,8]));
+    }
+  })();
   // Initialize default unlocks if missing
   if (!localStorage.getItem('geoflyer-unlocked')) localStorage.setItem('geoflyer-unlocked', JSON.stringify([0,1,2,3]));
   if (!localStorage.getItem('geoflyer-coins')) localStorage.setItem('geoflyer-coins', '0');
