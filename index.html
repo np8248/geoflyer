@@ -654,77 +654,108 @@ draw();
           ctx.beginPath(); ctx.arc(fx, fy, Math.max(1, sz), 0, Math.PI*2); ctx.fill();
         }
         ctx.globalAlpha = 1;
-        // Tail feathers
-        ctx.fillStyle = '#cc3300';
+        // Tail flames (sharp pointed shapes)
+        ctx.fillStyle = '#cc2200';
         ctx.beginPath();
-        ctx.moveTo(-S/4, -2);
-        ctx.quadraticCurveTo(-S/2 - 4, -5, -S/2 - 10, -S/6);
-        ctx.quadraticCurveTo(-S/2 - 2, -1, -S/4, 0);
-        ctx.closePath(); ctx.fill();
+        ctx.moveTo(-S/6, 0); ctx.lineTo(-S/2 - 6, -S/5); ctx.lineTo(-S/2, -S/10); ctx.closePath(); ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(-S/4, 2);
-        ctx.quadraticCurveTo(-S/2 - 4, 5, -S/2 - 10, S/6);
-        ctx.quadraticCurveTo(-S/2 - 2, 1, -S/4, 0);
-        ctx.closePath(); ctx.fill();
+        ctx.moveTo(-S/6, 0); ctx.lineTo(-S/2 - 6, S/5); ctx.lineTo(-S/2, S/10); ctx.closePath(); ctx.fill();
         ctx.fillStyle = '#ff6600';
         ctx.beginPath();
-        ctx.moveTo(-S/4, 0);
-        ctx.quadraticCurveTo(-S/2 - 6, 0, -S/2 - 12, 0);
-        ctx.quadraticCurveTo(-S/2 - 6, -2, -S/4, -1);
-        ctx.closePath(); ctx.fill();
-        // Wings
-        const wgrd = ctx.createLinearGradient(0, -S/2, 0, 0);
-        wgrd.addColorStop(0, '#ffaa00'); wgrd.addColorStop(1, '#ee5500');
-        ctx.fillStyle = wgrd;
+        ctx.moveTo(-S/6, 0); ctx.lineTo(-S/2 - 10, 0); ctx.lineTo(-S/2 - 2, -S/14); ctx.closePath(); ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(S/6, -2);
-        ctx.quadraticCurveTo(S/8, -S/4 - flap, -S/6, -S/2 - 2 - flap);
-        ctx.lineTo(-S/3, -S/2 + 2 - flap);
-        ctx.quadraticCurveTo(-S/6, -S/4 - flap, -S/4, -3);
-        ctx.closePath(); ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(S/6, 2);
-        ctx.quadraticCurveTo(S/8, S/4 + flap, -S/6, S/2 + 2 + flap);
-        ctx.lineTo(-S/3, S/2 - 2 + flap);
-        ctx.quadraticCurveTo(-S/6, S/4 + flap, -S/4, 3);
-        ctx.closePath(); ctx.fill();
-        // Fiery wing tips
-        ctx.fillStyle = '#ffdd44'; ctx.globalAlpha = 0.7;
-        ctx.beginPath(); ctx.arc(-S/4, -S/2 + 1 - flap, 3, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(-S/4, S/2 - 1 + flap, 3, 0, Math.PI*2); ctx.fill();
+        ctx.moveTo(-S/6, 0); ctx.lineTo(-S/2 - 10, 0); ctx.lineTo(-S/2 - 2, S/14); ctx.closePath(); ctx.fill();
+        // Flickering flame tips
+        const fl1 = Math.sin(pt * 4) * 2;
+        const fl2 = Math.sin(pt * 5 + 1) * 2;
+        ctx.fillStyle = '#ffcc00'; ctx.globalAlpha = 0.8;
+        ctx.beginPath(); ctx.moveTo(-S/2 - 6, -S/5); ctx.lineTo(-S/2 - 10 + fl1, -S/4); ctx.lineTo(-S/2 - 3, -S/6); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-S/2 - 6, S/5); ctx.lineTo(-S/2 - 10 + fl2, S/4); ctx.lineTo(-S/2 - 3, S/6); ctx.closePath(); ctx.fill();
         ctx.globalAlpha = 1;
-        // Body (rounded torso)
+        // Wings (sharp, angular, jagged flame edges)
+        const wgrd = ctx.createLinearGradient(0, -S/2, 0, 0);
+        wgrd.addColorStop(0, '#ffaa00'); wgrd.addColorStop(1, '#dd4400');
+        ctx.fillStyle = wgrd;
+        // Top wing
+        ctx.beginPath();
+        ctx.moveTo(S/8, -S/8);
+        ctx.lineTo(S/10, -S/4 - flap);
+        ctx.lineTo(-S/8, -S/2 - 2 - flap);
+        ctx.lineTo(-S/6, -S/3 - flap);
+        ctx.lineTo(-S/3, -S/2 + 1 - flap);
+        ctx.lineTo(-S/4, -S/4 - flap);
+        ctx.lineTo(-S/3, -S/8);
+        ctx.closePath(); ctx.fill();
+        // Bottom wing
+        ctx.beginPath();
+        ctx.moveTo(S/8, S/8);
+        ctx.lineTo(S/10, S/4 + flap);
+        ctx.lineTo(-S/8, S/2 + 2 + flap);
+        ctx.lineTo(-S/6, S/3 + flap);
+        ctx.lineTo(-S/3, S/2 - 1 + flap);
+        ctx.lineTo(-S/4, S/4 + flap);
+        ctx.lineTo(-S/3, S/8);
+        ctx.closePath(); ctx.fill();
+        // Flame glow at wing tips
+        ctx.fillStyle = '#ffee44'; ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(-S/8, -S/2 - 2 - flap); ctx.lineTo(-S/8 - 3, -S/2 - 5 - flap); ctx.lineTo(-S/8 + 3, -S/2 - 1 - flap); ctx.closePath(); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-S/8, S/2 + 2 + flap); ctx.lineTo(-S/8 - 3, S/2 + 5 + flap); ctx.lineTo(-S/8 + 3, S/2 + 1 + flap); ctx.closePath(); ctx.fill();
+        ctx.globalAlpha = 1;
+        // Body (angular diamond, NOT oval)
         const bgrd = ctx.createLinearGradient(-S/4, -S/6, S/4, S/6);
-        bgrd.addColorStop(0, '#ff5500'); bgrd.addColorStop(0.5, '#ee3300'); bgrd.addColorStop(1, '#cc2200');
+        bgrd.addColorStop(0, '#ff5500'); bgrd.addColorStop(0.5, '#ee3300'); bgrd.addColorStop(1, '#cc1100');
         ctx.fillStyle = bgrd;
-        ctx.beginPath(); ctx.ellipse(0, 0, S/3 + 2, S/6 + 1, 0, 0, Math.PI*2); ctx.fill();
-        // Head
-        ctx.fillStyle = '#ee4400';
-        ctx.beginPath(); ctx.arc(S/4 + 2, 0, S/7, 0, Math.PI*2); ctx.fill();
-        // Crest
+        ctx.beginPath();
+        ctx.moveTo(S/3 + 4, 0);
+        ctx.lineTo(S/8, -S/6);
+        ctx.lineTo(-S/4, -S/7);
+        ctx.lineTo(-S/6, 0);
+        ctx.lineTo(-S/4, S/7);
+        ctx.lineTo(S/8, S/6);
+        ctx.closePath(); ctx.fill();
+        // Bright belly line
+        ctx.strokeStyle = '#ff8800'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(S/3, 0); ctx.lineTo(-S/6, 0); ctx.stroke();
+        // Head (angular)
+        ctx.fillStyle = '#ee3300';
+        ctx.beginPath();
+        ctx.moveTo(S/2 + 5, 0);
+        ctx.lineTo(S/3 + 2, -S/7);
+        ctx.lineTo(S/6, -S/8);
+        ctx.lineTo(S/6, S/8);
+        ctx.lineTo(S/3 + 2, S/7);
+        ctx.closePath(); ctx.fill();
+        // Crest (tall sharp flame spikes)
         ctx.fillStyle = '#ffcc00';
         ctx.beginPath();
-        ctx.moveTo(S/4, -S/7 + 1);
-        ctx.lineTo(S/4 - 3, -S/7 - 5);
-        ctx.lineTo(S/4 + 1, -S/7 - 1);
-        ctx.lineTo(S/4 + 3, -S/7 - 6);
-        ctx.lineTo(S/4 + 5, -S/7);
+        ctx.moveTo(S/5, -S/7);
+        ctx.lineTo(S/5 - 2, -S/7 - 7);
+        ctx.lineTo(S/5 + 2, -S/7 - 2);
+        ctx.lineTo(S/5 + 4, -S/7 - 9);
+        ctx.lineTo(S/5 + 6, -S/7 - 3);
+        ctx.lineTo(S/5 + 7, -S/7);
         ctx.closePath(); ctx.fill();
-        // Beak
+        // Sharp beak
         ctx.fillStyle = '#ff8800';
         ctx.beginPath();
-        ctx.moveTo(S/4 + S/7, 0);
-        ctx.lineTo(S/2 + 6, -1);
-        ctx.lineTo(S/2 + 6, 2);
-        ctx.quadraticCurveTo(S/2 + 4, 3, S/4 + S/7, 2);
+        ctx.moveTo(S/2 + 5, 0);
+        ctx.lineTo(S/3 + 3, -2);
+        ctx.lineTo(S/3 + 3, 2);
         ctx.closePath(); ctx.fill();
-        // Eye
-        ctx.save(); ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 6;
+        // Fierce angular eye
+        ctx.save(); ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 6;
         ctx.fillStyle = '#ffee44';
-        ctx.beginPath(); ctx.arc(S/4 + 4, -1, 2.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(S/3, -1);
+        ctx.lineTo(S/4 + 1, -3);
+        ctx.lineTo(S/4 - 1, -1);
+        ctx.lineTo(S/4 + 1, 1);
+        ctx.closePath(); ctx.fill();
         ctx.restore();
         ctx.fillStyle = '#111';
-        ctx.beginPath(); ctx.arc(S/4 + 4.5, -1, 1, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(S/4 + 2, -1, 1, 0, Math.PI*2); ctx.fill();
         break;
       }
       case 5: { // Pirate Ship
