@@ -2840,39 +2840,32 @@ function drawCubeSkin10() {
 
 function drawShipSkin11() {
   const w = PSIZ * 1.2, h = PSIZ;
-  // Golden glow
+  // Golden glow + body with integrated snout (one smooth blob)
   X.save();
   X.shadowColor = '#C89830'; X.shadowBlur = 8;
-  // Body: golden blob potato shape with thick outline
   X.fillStyle = '#D4A43C';
   X.strokeStyle = '#4A3228'; X.lineWidth = 2.5;
   X.beginPath();
-  X.moveTo(w/3, 0);
-  X.quadraticCurveTo(w/3, -h/2.5, w/6, -h/2.8);
-  X.quadraticCurveTo(-w/6, -h/2.5, -w/3, -h/3);
-  X.quadraticCurveTo(-w/2 - 2, -h/4, -w/2 - 2, 0);
-  X.quadraticCurveTo(-w/2 - 2, h/3, -w/3, h/3);
-  X.lineTo(w/6, h/3);
-  X.quadraticCurveTo(w/3, h/3, w/3, 0);
+  // Start at top of snout, go around clockwise
+  X.moveTo(w/2 + 2, -h/8);           // top of snout
+  X.quadraticCurveTo(w/2 + 5, 0, w/2 + 2, h/8); // snout front curve
+  X.quadraticCurveTo(w/3, h/4, w/6, h/3);        // snout bottom into body
+  X.lineTo(-w/4, h/3);                             // bottom
+  X.quadraticCurveTo(-w/2 - 2, h/3, -w/2 - 2, 0); // rear bottom curve
+  X.quadraticCurveTo(-w/2 - 2, -h/3, -w/4, -h/3); // rear top curve
+  X.lineTo(0, -h/3);                                // top of head
+  X.quadraticCurveTo(w/4, -h/3, w/3, -h/4);       // forehead slopes down to snout
+  X.quadraticCurveTo(w/2, -h/5, w/2 + 2, -h/8);  // into snout top
   X.closePath(); X.fill(); X.stroke();
   X.restore();
-  // Protruding snout at front (rounded bump)
-  X.save();
-  X.shadowColor = '#C89830'; X.shadowBlur = 4;
+  // Lighter snout area overlay (no outline, just color)
   X.fillStyle = '#DAAF4A';
   X.beginPath();
   X.moveTo(w/4, -h/5);
-  X.quadraticCurveTo(w/2 + 4, -h/5, w/2 + 4, 0);
-  X.quadraticCurveTo(w/2 + 4, h/5, w/4, h/5);
+  X.quadraticCurveTo(w/2 + 2, -h/6, w/2 + 2, 0);
+  X.quadraticCurveTo(w/2 + 2, h/6, w/4, h/5);
+  X.quadraticCurveTo(w/6, 0, w/4, -h/5);
   X.closePath(); X.fill();
-  // Only stroke the outer curve, not the inner edge
-  X.strokeStyle = '#4A3228'; X.lineWidth = 2.5;
-  X.beginPath();
-  X.moveTo(w/4, -h/5);
-  X.quadraticCurveTo(w/2 + 4, -h/5, w/2 + 4, 0);
-  X.quadraticCurveTo(w/2 + 4, h/5, w/4, h/5);
-  X.stroke();
-  X.restore();
   // Highlight shine on body
   X.fillStyle = 'rgba(255,240,180,0.35)';
   X.beginPath();
@@ -2882,7 +2875,7 @@ function drawShipSkin11() {
   X.fillStyle = '#B8902E';
   X.beginPath(); X.ellipse(-w/6, -h/10, 3, 2, 0.3, 0, Math.PI * 2); X.fill();
   X.beginPath(); X.ellipse(-w/4, h/6, 2.5, 1.5, -0.2, 0, Math.PI * 2); X.fill();
-  X.beginPath(); X.ellipse(0, h/8, 2, 1.5, 0.5, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.ellipse(w/10, h/8, 2, 1.5, 0.5, 0, Math.PI * 2); X.fill();
   // Stubby legs with outline
   X.fillStyle = '#D4A43C'; X.strokeStyle = '#4A3228'; X.lineWidth = 2;
   X.beginPath();
@@ -2897,15 +2890,15 @@ function drawShipSkin11() {
   X.fill(); X.stroke();
   // Tiny ear bump
   X.fillStyle = '#D4A43C'; X.strokeStyle = '#4A3228'; X.lineWidth = 2;
-  X.beginPath(); X.arc(w/8, -h/2.8 - 1, 3, Math.PI, 0); X.fill(); X.stroke();
-  // Small tilted oval eye
+  X.beginPath(); X.arc(-w/10, -h/3 - 1, 3, Math.PI, 0); X.fill(); X.stroke();
+  // Small tilted oval eye (on the head, not the snout)
   X.fillStyle = '#2A1A10';
-  X.save(); X.translate(w/4 + 2, -h/6); X.rotate(-0.3);
+  X.save(); X.translate(w/6, -h/6); X.rotate(-0.3);
   X.beginPath(); X.ellipse(0, 0, 2.5, 1.8, 0, 0, Math.PI * 2); X.fill();
   X.restore();
   // Rosy cheek
   X.fillStyle = 'rgba(210,140,140,0.45)';
-  X.beginPath(); X.arc(w/3 - 2, -h/14, 4, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(w/5, -h/14, 4, 0, Math.PI * 2); X.fill();
   // Orange on back with leaf
   X.fillStyle = '#D06030';
   X.beginPath(); X.arc(-w/10, -h/2.8 - 2, 4, 0, Math.PI * 2); X.fill();
