@@ -180,7 +180,7 @@ const G = Math.floor(GND / T);
 let shipSkin = parseInt(localStorage.getItem('geoflyer-skin') || '0');
 const SKIN_COUNT = 10;
 let trailStyle = parseInt(localStorage.getItem('geoflyer-trail') || '0');
-const TRAIL_NAMES = ['None','Smoke','Fire','Rainbow','Candy','Snow','Skin Echo'];
+const TRAIL_NAMES = ['None','Smoke','Fire','Rainbow','Candy','Snow','Skin Echo','Laser'];
 const TRAIL_COLORS = [
   null, // none
   ['#888888','#777777','#666666','#555555'], // smoke
@@ -188,7 +188,8 @@ const TRAIL_COLORS = [
   ['#ff0000','#ff8800','#ffff00','#33ff33','#0099ff','#6633ff'], // rainbow
   ['#ff44aa','#ff88cc','#88ddff','#ffee44'], // candy
   ['#aaddff','#cceeff','#ffffff','#ddeeff'], // snow
-  null // skin echo (special)
+  null, // skin echo (special)
+  null  // laser (special - uses shadowBlur glow)
 ];
 const FREE_TRAILS = [0, 1];
 function getUnlockedTrails() {
@@ -272,6 +273,15 @@ function sx(x) { return x; }
 // ================================================================
 let state = 'start', camX = 0, att = 1, particles = [];
 let coinsGot = 0;
+let activePowerUps = {};    // { bamboozled: endTime, invincible: endTime, magnet: endTime }
+const POWERUP_DURATION = 10000; // 10 seconds
+function hasPU(type) { return activePowerUps[type] && Date.now() < activePowerUps[type]; }
+let powerUpGenX = 60;       // next tile x for power-up generation
+let powerUpFlash = 0;
+let powerUpFlashName = '';
+let powerUpFlashType = '';
+let bamboozledCount = 0;  // times bamboozled this run (for achievement)
+let laserTrail = []; const LASER_MAX_POINTS = 600;
 let persistentCoins = parseInt(localStorage.getItem('geoflyer-coins') || '0');
 const FREE_SKINS = [0,1,2,3];
 const SKIN_COSTS = {4:50, 5:100, 6:150, 7:200, 8:250};
@@ -283,11 +293,12 @@ function isSkinUnlocked(idx) { return FREE_SKINS.includes(idx) || getUnlockedSki
 // Achievement system
 const ACHIEVEMENTS = {
   'survive-1000m': { name: 'Marathon Flyer', desc: 'Survive 1000 meters', reward: 'skin', rewardSkin: 9 },
-  'survive-500m': { name: 'Hot Streak', desc: 'Survive 500 meters', reward: 'trail', rewardTrail: 2 },
+  'die-invincible': { name: 'Ironic Death', desc: 'Die while invincible power-up is active', reward: 'trail', rewardTrail: 2 },
   'collect-100': { name: 'Coin Hoarder', desc: 'Collect 100 coins in one run', reward: 'trail', rewardTrail: 3 },
   'collect-25-run': { name: 'Sweet Tooth', desc: 'Collect 25 coins in one run', reward: 'trail', rewardTrail: 4 },
   'survive-2000m': { name: 'Blizzard Runner', desc: 'Survive 2000 meters', reward: 'trail', rewardTrail: 5 },
-  'loyal-10': { name: 'Loyal Flyer', desc: 'Play same skin 10 games in a row (300m+ each)', reward: 'trail', rewardTrail: 6 }
+  'loyal-10': { name: 'Loyal Flyer', desc: 'Play same skin 10 games in a row (300m+ each)', reward: 'trail', rewardTrail: 6 },
+  'bamboozled-3': { name: 'Bamboozle Survivor', desc: 'Get bamboozled 3 times in one run and survive', reward: 'trail', rewardTrail: 7 }
 };
 function getAchievements() {
   try { return JSON.parse(localStorage.getItem('geoflyer-achievements') || '{}'); }
@@ -998,7 +1009,7 @@ function generateAhead() {
     if (rng() < 0.06) {
       // Pick a row in the safe flying zone (rows 4-8)
       const row = rngInt(4, G - 3);
-      const count = rngInt(1, 3); // 1-3 coins instead of always 5
+      const count = 3; // always spawn coins in groups of 3
       // Check columns are clear of blocks and spikes
       let clear = true;
       for (let i = 0; i < count; i++) {
@@ -1017,6 +1028,23 @@ function generateAhead() {
       }
     }
     coinGenX++;
+  }
+  // Power-up spawning
+  while (powerUpGenX < aheadTile) {
+    if (rng() < 0.02) {
+      const row = rngInt(4, G - 3);
+      let clear = true;
+      for (let r = row - 1; r <= row + 1; r++) {
+        if (blockSet.has(powerUpGenX + ',' + r)) { clear = false; break; }
+      }
+      if (clear) {
+        const types = ['bamboozled', 'invincible', 'magnet'];
+        addObj('PU', powerUpGenX, row, { puType: types[Math.floor(rng() * 3)] });
+        powerUpGenX += rngInt(80, 150);
+        continue;
+      }
+    }
+    powerUpGenX++;
   }
 }
 
@@ -1044,9 +1072,41 @@ const zoneList = [
     sk:'#fff', skIn:'#ddd', skB:'#ccc', nm:'magenta' }
 ];
 const ZONE_LEN = 1200;
+const ZONE_TRANSITION = 250;
+
+function hexToRGB(hex) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  return [parseInt(hex.substring(0,2),16), parseInt(hex.substring(2,4),16), parseInt(hex.substring(4,6),16)];
+}
+function rgbToHex(r,g,b) {
+  return '#' + ((1<<24)+(Math.round(r)<<16)+(Math.round(g)<<8)+Math.round(b)).toString(16).slice(1);
+}
+function lerpColor(hex1, hex2, t) {
+  const [r1,g1,b1] = hexToRGB(hex1);
+  const [r2,g2,b2] = hexToRGB(hex2);
+  return rgbToHex(r1+(r2-r1)*t, g1+(g2-g1)*t, b1+(b2-b1)*t);
+}
+
 function getZone(px) {
   const idx = Math.floor(px / ZONE_LEN) % zoneList.length;
-  return zoneList[idx];
+  const posInZone = px - Math.floor(px / ZONE_LEN) * ZONE_LEN;
+  const distToEnd = ZONE_LEN - posInZone;
+  if (distToEnd > ZONE_TRANSITION) return zoneList[idx];
+  const nextIdx = (idx + 1) % zoneList.length;
+  const t = 1 - distToEnd / ZONE_TRANSITION;
+  const a = zoneList[idx], b = zoneList[nextIdx];
+  return {
+    bg: lerpColor(a.bg, b.bg, t),
+    bgR: lerpColor(a.bgR, b.bgR, t),
+    bgB: lerpColor(a.bgB, b.bgB, t),
+    gnd: lerpColor(a.gnd, b.gnd, t),
+    gl: lerpColor(a.gl, b.gl, t),
+    sk: lerpColor(a.sk, b.sk, t),
+    skIn: lerpColor(a.skIn, b.skIn, t),
+    skB: lerpColor(a.skB, b.skB, t),
+    nm: a.nm
+  };
 }
 
 // ================================================================
@@ -1061,8 +1121,10 @@ function startGame() {
   state = 'playing'; camX = 0; canRestart = false;
   P = { x: 120, y: GND/2 - PSIZ/2, vy: 0, rot: 0, onG: false, dead: false, ship: true };
   particles = []; inputTap = false;
-  coinsGot = 0;
-  L.length = 0; blockSet.clear(); genX = 20; gndSpikeX = 0; ceilGenX = 0; ceilSpikeX = 0; ceilBumpX = 0; coinGenX = 30; // reset level
+  coinsGot = 0; laserTrail = [];
+  L.length = 0; blockSet.clear(); genX = 20; gndSpikeX = 0; ceilGenX = 0; ceilSpikeX = 0; ceilBumpX = 0; coinGenX = 30; powerUpGenX = 60; // reset level
+  activePowerUps = {}; powerUpFlash = 0; powerUpFlashName = ''; powerUpFlashType = '';
+  bamboozledCount = 0;
   gameStartTime = Date.now();
   lastSpeedUpCount = 0;
   speedUpFlash = 0;
@@ -1089,7 +1151,8 @@ function kill() {
     const dist = Math.floor(camX / T);
     if (dist > highScore) { highScore = dist; localStorage.setItem('endless-high', highScore); }
     // Achievement checks
-    if (dist >= 500 && !hasAchievement('survive-500m')) grantAchievement('survive-500m');
+    if (hasPU('invincible') && !hasAchievement('die-invincible')) grantAchievement('die-invincible');
+    if (bamboozledCount >= 3 && !hasAchievement('bamboozled-3')) grantAchievement('bamboozled-3');
     if (dist >= 1000 && !hasAchievement('survive-1000m')) grantAchievement('survive-1000m');
     if (dist >= 2000 && !hasAchievement('survive-2000m')) grantAchievement('survive-2000m');
     if (coinsGot >= 25 && !hasAchievement('collect-25-run')) grantAchievement('collect-25-run');
@@ -1131,8 +1194,19 @@ function update() {
   if (state !== 'playing') return;
   camX += SPEED;
 
+  // Power-up expiry
+  const now = Date.now();
+  for (const pu in activePowerUps) {
+    if (now >= activePowerUps[pu]) delete activePowerUps[pu];
+  }
+
   if (P.ship) {
-    if (inputDown) P.vy += SHIP_UP; else P.vy += SHIP_GRAV;
+    const bamboozled = hasPU('bamboozled');
+    if (bamboozled) {
+      if (inputDown) P.vy += SHIP_GRAV; else P.vy += SHIP_UP;
+    } else {
+      if (inputDown) P.vy += SHIP_UP; else P.vy += SHIP_GRAV;
+    }
     P.vy = Math.max(-SHIP_MAX, Math.min(SHIP_MAX, P.vy));
     P.y += P.vy;
     if (P.y + PSIZ > GND) { P.y = GND - PSIZ; P.vy = 0; }
@@ -1182,32 +1256,32 @@ function update() {
       }
       case 'S': {
         const sR = { x: osx+8, y: sy+10, w: T-16, h: T-10 };
-        if (ov(pr(), sR)) { kill(); return; }
+        if (ov(pr(), sR) && !hasPU('invincible')) { kill(); return; }
         break;
       }
       case 'CS': {
         const sR = { x: osx+8, y: sy, w: T-16, h: T-10 };
-        if (ov(pr(), sR)) { kill(); return; }
+        if (ov(pr(), sR) && !hasPU('invincible')) { kill(); return; }
         break;
       }
       case 'SS': {
         const sR = { x: osx+10, y: sy+T/2+2, w: T-20, h: T/2-2 };
-        if (ov(pr(), sR)) { kill(); return; }
+        if (ov(pr(), sR) && !hasPU('invincible')) { kill(); return; }
         break;
       }
       case 'SCS': {
         const sR = { x: osx+10, y: sy, w: T-20, h: T/2-2 };
-        if (ov(pr(), sR)) { kill(); return; }
+        if (ov(pr(), sR) && !hasPU('invincible')) { kill(); return; }
         break;
       }
       case 'HG': {
         const sR = { x: osx+6, y: sy+T, w: T-12, h: T };
-        if (ov(pr(), sR)) { kill(); return; }
+        if (ov(pr(), sR) && !hasPU('invincible')) { kill(); return; }
         break;
       }
       case 'FR': {
         const fR = { x: osx+6, y: sy + T - 18, w: T-12, h: 18 };
-        if (ov(pr(), fR)) { kill(); return; }
+        if (ov(pr(), fR) && !hasPU('invincible')) { kill(); return; }
         break;
       }
       case 'P': {
@@ -1227,8 +1301,31 @@ function update() {
       }
       case 'CN': {
         if (obj.collected) break;
+        if (hasPU('magnet')) {
+          obj.collected = true; coinsGot++; break;
+        }
         const cR = { x: osx+4, y: sy+4, w: T-8, h: T-8 };
         if (ov(pr(), cR)) { obj.collected = true; coinsGot++; }
+        break;
+      }
+      case 'PU': {
+        if (obj.collected) break;
+        const puR = { x: osx+4, y: sy+4, w: T-8, h: T-8 };
+        if (ov(pr(), puR)) {
+          obj.collected = true;
+          activePowerUps[obj.puType] = Date.now() + POWERUP_DURATION;
+          powerUpFlash = Date.now();
+          const names = { bamboozled: 'BAMBOOZLED!', invincible: 'INVINCIBLE!', magnet: 'MAGNET!' };
+          powerUpFlashName = names[obj.puType] || 'POWER UP!';
+          powerUpFlashType = obj.puType;
+          if (obj.puType === 'bamboozled') bamboozledCount++;
+          // Magnet: instantly collect all visible coins
+          if (obj.puType === 'magnet') {
+            for (const o2 of L) {
+              if (o2.t === 'CN' && !o2.collected) { o2.collected = true; coinsGot++; }
+            }
+          }
+        }
         break;
       }
     }
@@ -1246,6 +1343,12 @@ function update() {
 
   if (P.y > H + 50 || P.y < -100) { kill(); return; }
 
+  // Record laser trail points
+  if (trailStyle === 7 && state === 'playing') {
+    laserTrail.push({ wx: P.x + camX + PSIZ/2, wy: P.y + PSIZ/2 });
+    if (laserTrail.length > LASER_MAX_POINTS) laserTrail.shift();
+  }
+
   // Endless: generate ahead and cleanup behind
   generateAhead();
   cleanupBehind();
@@ -1262,15 +1365,45 @@ function update() {
 const BG_TILE_W = 2600; // background repeats every this many pixels (parallax space)
 const bgRects = [];
 (function() {
+  const gap = 20;
+  // Check overlap accounting for wrapping at BG_TILE_W boundary
+  function overlaps(rect) {
+    for (const r of bgRects) {
+      // Check at normal position and wrapped positions (±BG_TILE_W)
+      for (const ox of [0, -BG_TILE_W, BG_TILE_W]) {
+        const rx = rect.x + ox;
+        if (rx < r.x + r.w + gap && rx + rect.w + gap > r.x &&
+            rect.y < r.y + r.h + gap && rect.y + rect.h + gap > r.y) return true;
+      }
+    }
+    return false;
+  }
   const cols = Math.ceil(BG_TILE_W / 260) + 2;
   for (let c = 0; c < cols; c++) {
     for (let r = 0; r < 3; r++) {
-      bgRects.push({
-        x: c * 260 - 100 + (Math.random() - 0.5) * 80,
-        y: r * (GND / 3) + (Math.random() - 0.5) * 30,
-        w: 140 + Math.random() * 180,
-        h: 70 + Math.random() * 110
-      });
+      let placed = false;
+      for (let attempt = 0; attempt < 30; attempt++) {
+        // Shrink size on later attempts to help fit
+        const shrink = Math.min(attempt * 3, 60);
+        const rect = {
+          x: c * 260 - 100 + (Math.random() - 0.5) * 80,
+          y: r * (GND / 3) + (Math.random() - 0.5) * 30,
+          w: Math.max(80, 140 + Math.random() * 180 - shrink),
+          h: Math.max(50, 70 + Math.random() * 110 - shrink)
+        };
+        if (!overlaps(rect)) { bgRects.push(rect); placed = true; break; }
+      }
+      if (!placed) {
+        // Tiny fallback rect in a unique y-band so it can't overlap vertically
+        const fallback = {
+          x: c * 260 - 50 + (Math.random() - 0.5) * 20,
+          y: r * (GND / 3) + 40 + Math.random() * 10,
+          w: 60 + Math.random() * 30,
+          h: 40 + Math.random() * 20
+        };
+        if (!overlaps(fallback)) bgRects.push(fallback);
+        // else skip — better to have one fewer block than overlapping
+      }
     }
   }
 })();
@@ -1279,6 +1412,14 @@ const stars = [];
 for (let i = 0; i < 50; i++) stars.push({
   x: Math.random() * 20000, y: Math.random() * (GND - 30) + 10,
   sz: Math.random() * 2.5 + 0.8, br: Math.random() * 0.5 + 0.3
+});
+
+const beatLights = [];
+for (let i = 0; i < 30; i++) beatLights.push({
+  x: Math.random() * 20000,
+  y: Math.random() * (GND - 60) + 20,
+  sz: Math.random() * 2 + 1.5,
+  phase: Math.random() * Math.PI * 2
 });
 
 function drawBG() {
@@ -1305,6 +1446,18 @@ function drawBG() {
     const a = s.br + Math.sin(Date.now() * 0.002 + s.x) * 0.12;
     X.fillStyle = `rgba(255,255,200,${Math.max(0, a)})`;
     X.fillRect(ssx, s.y, s.sz, s.sz);
+  }
+
+  // Beat lights — subtle pulsing dots at ~120 BPM (2 Hz)
+  const bTime = Date.now() * 0.001;
+  for (const bl of beatLights) {
+    let blx = ((bl.x - camX * 0.05) % (W + 100));
+    if (blx < 0) blx += W + 100;
+    const pulse = Math.sin(bTime * Math.PI * 4 + bl.phase);
+    const bAlpha = 0.3 + pulse * 0.15;
+    const bSz = bl.sz + pulse * 0.6;
+    X.fillStyle = `rgba(180,220,255,${Math.max(0, bAlpha)})`;
+    X.fillRect(blx, bl.y, bSz, bSz);
   }
 
   // Ground area below blocks
@@ -1467,6 +1620,24 @@ function drawCoin(bx, by, collected) {
   X.shadowBlur = 0; X.restore();
 }
 
+function drawPowerUp(bx, by, puType, collected) {
+  if (collected) return;
+  const cx = bx+T/2, cy = by+T/2;
+  const t = Date.now() * 0.003;
+  const bob = Math.sin(t * 2) * 3;
+  X.save();
+  // All power-ups look the same before pickup — blue mystery orb
+  X.shadowColor = '#0af'; X.shadowBlur = 14;
+  X.fillStyle = '#0af';
+  X.beginPath(); X.arc(cx, cy + bob, T/2 - 4, 0, Math.PI*2); X.fill();
+  X.fillStyle = 'rgba(0,0,0,0.3)';
+  X.beginPath(); X.arc(cx, cy + bob, T/2 - 8, 0, Math.PI*2); X.fill();
+  X.fillStyle = '#fff'; X.font = 'bold 16px Arial';
+  X.textAlign = 'center'; X.textBaseline = 'middle';
+  X.fillText('?', cx, cy + bob + 1);
+  X.shadowBlur = 0; X.restore();
+}
+
 function drawObjects() {
   const vL = camX - T*2, vR = camX + W + T*2;
   for (const o of L) {
@@ -1488,6 +1659,7 @@ function drawObjects() {
       case 'FR': drawFire(ox, oy); break;
       case 'SM': drawSmiley(ox, oy); break;
       case 'CN': drawCoin(ox, oy, o.collected); break;
+      case 'PU': drawPowerUp(ox, oy, o.puType, o.collected); break;
     }
     // Hitbox overlay
     if (showHitboxes) {
@@ -2597,6 +2769,42 @@ function drawPlayer() {
     particles = particles.filter(p => p.life > 0);
     return;
   }
+  // Draw laser trail in screen space (before player rotation transform)
+  if (trailStyle === 7 && laserTrail.length > 1) {
+    X.save();
+    X.strokeStyle = '#0ff';
+    X.shadowColor = '#0ff';
+    X.shadowBlur = 12;
+    X.lineWidth = 3;
+    X.beginPath();
+    let started = false;
+    for (let i = 0; i < laserTrail.length; i++) {
+      const sx = laserTrail[i].wx - camX;
+      if (sx < -50) continue; // skip off-screen left
+      const sy = laserTrail[i].wy;
+      if (!started) { X.moveTo(sx, sy); started = true; }
+      else X.lineTo(sx, sy);
+    }
+    X.stroke();
+    // Brighter white tip near current position
+    if (laserTrail.length >= 2) {
+      const tipLen = Math.min(20, laserTrail.length);
+      X.strokeStyle = '#fff';
+      X.shadowColor = '#fff';
+      X.shadowBlur = 16;
+      X.lineWidth = 2;
+      X.beginPath();
+      const startIdx = laserTrail.length - tipLen;
+      X.moveTo(laserTrail[startIdx].wx - camX, laserTrail[startIdx].wy);
+      for (let i = startIdx + 1; i < laserTrail.length; i++) {
+        X.lineTo(laserTrail[i].wx - camX, laserTrail[i].wy);
+      }
+      X.stroke();
+    }
+    X.shadowBlur = 0;
+    X.restore();
+  }
+
   const cx = P.x+PSIZ/2, cy = P.y+PSIZ/2;
   X.save(); X.translate(cx, cy); X.rotate(P.rot * Math.PI / 180);
 
@@ -2710,6 +2918,8 @@ function drawPlayer() {
         }
         X.restore();
       }
+    } else if (trailStyle === 7) {
+      // Laser — rendered outside rotation transform (see above)
     } else if (trailStyle === 6) { // Skin Echo — spits out tumbling mini copies like candy
       for (let i = 0; i < 10; i++) {
         const seed = i * 137.5;
@@ -2809,6 +3019,208 @@ function drawSpeedUpFlash() {
   X.restore();
 }
 
+function drawPowerUpHUD() {
+  const names = { bamboozled: 'BAMBOOZLED!', invincible: 'INVINCIBLE!', magnet: 'MAGNET!' };
+  const colors = { bamboozled: '#e040fb', invincible: '#ffd600', magnet: '#0af' };
+  const barW = 160, barH = 10;
+  const now = Date.now();
+  let slot = 0;
+
+  X.save();
+  for (const pu of ['bamboozled', 'invincible', 'magnet']) {
+    if (!activePowerUps[pu] || now >= activePowerUps[pu]) continue;
+    const remaining = activePowerUps[pu] - now;
+    const pct = remaining / POWERUP_DURATION;
+    const barX = W/2 - barW/2, barY = 56 + slot * 28;
+    const col = colors[pu];
+
+    X.fillStyle = col; X.font = 'bold 13px Arial';
+    X.textAlign = 'center'; X.shadowColor = col; X.shadowBlur = 8;
+    X.fillText(names[pu], W/2, barY - 4);
+
+    X.shadowBlur = 0;
+    X.fillStyle = 'rgba(0,0,0,0.5)';
+    X.fillRect(barX, barY, barW, barH);
+    X.fillStyle = col;
+    X.fillRect(barX, barY, barW * pct, barH);
+    X.strokeStyle = 'rgba(255,255,255,0.3)'; X.lineWidth = 1;
+    X.strokeRect(barX, barY, barW, barH);
+    slot++;
+  }
+
+  // Bamboozled purple tint
+  if (hasPU('bamboozled')) {
+    X.fillStyle = 'rgba(224, 64, 251, 0.04)';
+    X.fillRect(0, 0, W, H);
+  }
+
+  X.restore();
+}
+
+function drawPowerUpFlash() {
+  if (powerUpFlash === 0) return;
+  const elapsed = Date.now() - powerUpFlash;
+  const dur = 2500;
+  if (elapsed > dur) { powerUpFlash = 0; return; }
+
+  const cx = W / 2, cy = H / 2 - 30;
+
+  if (powerUpFlashType === 'bamboozled') {
+    // Green spinning "BAMBOOZLED?" letters
+    const fadeIn = Math.min(1, elapsed / 300);
+    const fadeOut = elapsed > dur - 600 ? Math.max(0, (dur - elapsed) / 600) : 1;
+    const alpha = fadeIn * fadeOut;
+    const text = 'BAMBOOZLED?';
+    const spin = elapsed * 0.004; // rotation over time
+    const spread = Math.min(1, elapsed / 500); // letters spread outward then settle
+    X.save();
+    X.globalAlpha = alpha;
+    X.textAlign = 'center'; X.textBaseline = 'middle';
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      // Each letter gets its own wobble
+      const offsetAngle = (i / text.length) * Math.PI * 2 + spin;
+      const wobbleY = Math.sin(offsetAngle) * 8 * spread;
+      const letterRot = Math.sin(offsetAngle + i) * 0.3 * spread;
+      const xOff = (i - (text.length - 1) / 2) * 32;
+      // Scale up on entry
+      const scale = 0.5 + spread * 0.5;
+      X.save();
+      X.translate(cx + xOff, cy + wobbleY);
+      X.rotate(letterRot);
+      X.scale(scale, scale);
+      // Green glow
+      X.shadowColor = '#0f0'; X.shadowBlur = 18;
+      X.fillStyle = ch === '?' ? '#ffff00' : '#00ff44';
+      X.font = 'bold 44px Arial';
+      X.fillText(ch, 0, 0);
+      // Outline
+      X.strokeStyle = 'rgba(0,0,0,0.5)'; X.lineWidth = 2;
+      X.strokeText(ch, 0, 0);
+      X.restore();
+    }
+    X.restore();
+
+  } else if (powerUpFlashType === 'magnet') {
+    // "MAGNET!" with two magnets pulling coins inward
+    const fadeIn = Math.min(1, elapsed / 300);
+    const fadeOut = elapsed > dur - 600 ? Math.max(0, (dur - elapsed) / 600) : 1;
+    const alpha = fadeIn * fadeOut;
+    X.save();
+    X.globalAlpha = alpha;
+    X.textAlign = 'center'; X.textBaseline = 'middle';
+    // Main text
+    X.shadowColor = '#0af'; X.shadowBlur = 20;
+    X.fillStyle = '#0af';
+    X.font = 'bold 44px Arial';
+    X.fillText('MAGNET!', cx, cy);
+    X.strokeStyle = 'rgba(0,0,0,0.4)'; X.lineWidth = 2;
+    X.strokeText('MAGNET!', cx, cy);
+    // Left magnet (U-shape)
+    const magnetDist = 180 + Math.sin(elapsed * 0.005) * 10;
+    for (let side = -1; side <= 1; side += 2) {
+      const mx = cx + side * magnetDist;
+      const my = cy;
+      X.save();
+      X.translate(mx, my);
+      if (side === 1) X.scale(-1, 1);
+      // U magnet shape
+      X.lineWidth = 5;
+      // Red arm
+      X.strokeStyle = '#ff3333';
+      X.beginPath(); X.moveTo(-12, -18); X.lineTo(-12, 6);
+      X.arc(0, 6, 12, Math.PI, 0, true);
+      X.stroke();
+      // Blue arm
+      X.strokeStyle = '#3366ff';
+      X.beginPath(); X.moveTo(12, 6); X.lineTo(12, -18);
+      X.stroke();
+      // Caps
+      X.fillStyle = '#ff3333';
+      X.fillRect(-15, -22, 8, 8);
+      X.fillStyle = '#3366ff';
+      X.fillRect(7, -22, 8, 8);
+      X.restore();
+    }
+    // Coins flying inward toward center
+    const numCoins = 8;
+    for (let i = 0; i < numCoins; i++) {
+      const angle = (i / numCoins) * Math.PI * 2 + elapsed * 0.002;
+      const progress = ((elapsed * 0.001 + i * 0.3) % 1.5) / 1.5; // 0->1 cycle
+      const dist = (1 - progress) * 140 + 20;
+      const coinX = cx + Math.cos(angle) * dist;
+      const coinY = cy + Math.sin(angle) * dist * 0.5;
+      const coinAlpha = progress < 0.8 ? 1 : (1 - progress) / 0.2;
+      X.save();
+      X.globalAlpha = alpha * coinAlpha;
+      X.shadowColor = '#ffd600'; X.shadowBlur = 6;
+      X.fillStyle = '#ffd600';
+      X.beginPath(); X.arc(coinX, coinY, 6, 0, Math.PI * 2); X.fill();
+      X.fillStyle = '#ffab00';
+      X.beginPath(); X.arc(coinX, coinY, 4, 0, Math.PI * 2); X.fill();
+      X.restore();
+    }
+    X.restore();
+
+  } else if (powerUpFlashType === 'invincible') {
+    // Shield forming around text
+    const fadeIn = Math.min(1, elapsed / 300);
+    const fadeOut = elapsed > dur - 600 ? Math.max(0, (dur - elapsed) / 600) : 1;
+    const alpha = fadeIn * fadeOut;
+    const shieldGrow = Math.min(1, elapsed / 800); // shield expands over 800ms
+    X.save();
+    X.globalAlpha = alpha;
+    X.textAlign = 'center'; X.textBaseline = 'middle';
+    // Shield layers (outer to inner)
+    const maxR = 90;
+    const r = maxR * shieldGrow;
+    // Outer glow ring
+    X.shadowColor = '#ffd600'; X.shadowBlur = 30;
+    X.strokeStyle = 'rgba(255,214,0,' + (0.3 * shieldGrow) + ')';
+    X.lineWidth = 6;
+    X.beginPath(); X.arc(cx, cy, r + 10, 0, Math.PI * 2); X.stroke();
+    // Shield hex segments forming
+    X.shadowBlur = 12;
+    const segments = 6;
+    const segAngle = Math.PI * 2 / segments;
+    for (let i = 0; i < segments; i++) {
+      const segProgress = Math.max(0, Math.min(1, (shieldGrow * segments - i) / 1));
+      if (segProgress <= 0) continue;
+      const a1 = segAngle * i - Math.PI / 2;
+      const a2 = a1 + segAngle * segProgress;
+      X.strokeStyle = 'rgba(255,214,0,' + (0.6 * segProgress) + ')';
+      X.lineWidth = 4;
+      X.beginPath(); X.arc(cx, cy, r, a1, a2); X.stroke();
+      // Segment node dots
+      X.fillStyle = '#ffd600';
+      X.beginPath();
+      X.arc(cx + Math.cos(a1) * r, cy + Math.sin(a1) * r, 3 * segProgress, 0, Math.PI * 2);
+      X.fill();
+    }
+    // Inner shield fill
+    X.fillStyle = 'rgba(255,214,0,' + (0.06 * shieldGrow) + ')';
+    X.beginPath(); X.arc(cx, cy, r, 0, Math.PI * 2); X.fill();
+    // Center star burst on completion
+    if (shieldGrow >= 1) {
+      const burstT = (elapsed - 800) * 0.003;
+      const pulse = 1 + Math.sin(burstT * 3) * 0.1;
+      X.fillStyle = '#ffd600'; X.font = 'bold 20px Arial';
+      X.save(); X.translate(cx, cy - 40);
+      X.scale(pulse, pulse);
+      X.fillText('\u2605', 0, 0);
+      X.restore();
+    }
+    // Text
+    X.shadowColor = '#ffd600'; X.shadowBlur = 20;
+    X.fillStyle = '#ffd600';
+    X.font = 'bold 42px Arial';
+    X.fillText('INVINCIBLE!', cx, cy);
+    X.strokeStyle = 'rgba(0,0,0,0.4)'; X.lineWidth = 2;
+    X.strokeText('INVINCIBLE!', cx, cy);
+    X.restore();
+  }
+}
+
 function loop() {
   try {
     X.clearRect(0, 0, W, H);
@@ -2818,6 +3230,8 @@ function loop() {
     update();
     drawPlayer();
     drawSpeedUpFlash();
+    drawPowerUpFlash();
+    drawPowerUpHUD();
   } catch(e) {
     console.error('Game error:', e);
   }
