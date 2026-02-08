@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>GeoFlyer</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;font-family:'Arial',sans-serif;position:relative}
-canvas{display:block}
+html,body{overflow:hidden;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+body{background:#000;display:flex;justify-content:center;align-items:center;height:100vh;font-family:'Arial',sans-serif;position:relative}
+canvas{display:block;touch-action:none}
 #ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;display:flex;flex-direction:column;align-items:center}
 #pbar-wrap{position:absolute;top:10px;width:280px;height:7px;background:rgba(0,0,0,0.5);border-radius:4px;overflow:hidden}
 #pbar{height:100%;width:0%;background:#0f0;border-radius:4px;transition:width 0.1s}
@@ -34,6 +35,23 @@ canvas{display:block}
 .menu-btn:hover{background:rgba(0,170,255,0.25);transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,170,255,0.3)}
 #winS h2{color:#0f0;font-size:34px;text-shadow:0 0 20px #0f0;margin-bottom:12px}
 #pauseS h2{color:#fff;font-size:34px;text-shadow:0 0 20px #0af;margin-bottom:12px}
+.retry-btn:active{background:rgba(0,255,100,0.25);transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,255,100,0.3)}
+.menu-btn:active{background:rgba(0,170,255,0.25);transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,170,255,0.3)}
+#pauseBtn:active,#homeBtn:active{opacity:1}
+@media(max-width:700px){
+  #scoreTxt{font-size:15px;top:max(10px,env(safe-area-inset-top))}
+  #highTxt{font-size:11px;top:max(30px,calc(env(safe-area-inset-top) + 20px))}
+  #coinTxt{font-size:14px;right:50px;top:max(10px,env(safe-area-inset-top))}
+  #pauseBtn{font-size:28px;padding:6px 10px;top:max(8px,env(safe-area-inset-top));right:16px}
+  #homeBtn{font-size:14px;padding:6px 14px;top:max(10px,env(safe-area-inset-top))}
+  #startS h1{font-size:28px}
+  #startS h2{font-size:16px}
+  .scr p{font-size:14px}
+  .scr .sub{font-size:11px;max-width:90vw;text-align:center}
+  .death-btn{padding:14px 28px;font-size:15px}
+  #deathS h2{font-size:28px}
+  #pbar-wrap{width:200px}
+}
 </style>
 </head>
 <body>
@@ -263,8 +281,18 @@ document.addEventListener('keyup', e => {
 });
 C.addEventListener('mousedown', () => { keyOn('k-mouse'); inputDown = true; holdJump = true; inputTap = true; onInput(); });
 C.addEventListener('mouseup', () => { keyOff('k-mouse'); inputDown = false; holdJump = false; });
-C.addEventListener('touchstart', e => { e.preventDefault(); keyOn('k-mouse'); inputDown = true; holdJump = true; inputTap = true; onInput(); }, {passive:false});
-C.addEventListener('touchend', e => { e.preventDefault(); keyOff('k-mouse'); inputDown = false; holdJump = false; }, {passive:false});
+C.addEventListener('touchstart', e => { e.preventDefault(); inputDown = true; holdJump = true; inputTap = true; onInput(); }, {passive:false});
+C.addEventListener('touchend', e => { e.preventDefault(); inputDown = false; holdJump = false; }, {passive:false});
+// Fullscreen touch — catch taps outside canvas (e.g. on UI overlay areas)
+document.addEventListener('touchstart', e => {
+  if (e.target === C || e.target.closest('.death-btn') || e.target.closest('#pauseBtn') || e.target.closest('#homeBtn')) return;
+  if (state === 'start' || state === 'playing') { e.preventDefault(); inputDown = true; holdJump = true; inputTap = true; onInput(); }
+}, {passive:false});
+document.addEventListener('touchend', e => {
+  if (e.target === C || e.target.closest('.death-btn') || e.target.closest('#pauseBtn') || e.target.closest('#homeBtn')) return;
+  if (state === 'playing' || state === 'start') { e.preventDefault(); inputDown = false; holdJump = false; }
+}, {passive:false});
+document.addEventListener('touchmove', e => { e.preventDefault(); }, {passive:false});
 
 // ================================================================
 // LEVEL OBJECTS - helpers apply sx() spacing

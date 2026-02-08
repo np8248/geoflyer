@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>GeoFlyer</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -14,6 +14,8 @@ body {
   height: 100vh;
   overflow: hidden;
   font-family: 'Arial', sans-serif;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 canvas#bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
@@ -214,9 +216,46 @@ h2 {
   transition: all 0.15s;
   font-family: 'Arial', sans-serif;
 }
-.skin-back:hover {
+.skin-back:hover, .skin-back:active {
   background: rgba(255,255,255,0.2);
   border-color: rgba(255,255,255,0.5);
+}
+
+.mode-card:active {
+  border-color: #0af;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 170, 255, 0.25);
+  background: rgba(15, 15, 60, 0.9);
+}
+
+.skin-arrow:active {
+  color: #fff;
+  transform: scale(1.2);
+}
+
+.skin-close-x:active {
+  color: #fff;
+}
+
+@media (max-width: 700px) {
+  body { overflow-y: auto; align-items: flex-start; padding: 24px 0; }
+  .menu { gap: 12px; padding: 0 12px; }
+  h1 { font-size: 32px; }
+  h2 { font-size: 16px; margin-bottom: 16px; }
+  .mode-cards { flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .mode-card { width: 85vw !important; max-width: 320px; padding: 18px 16px !important; }
+  .mode-card h3 { font-size: 18px; }
+  .mode-card p { font-size: 12px; }
+  .mode-icon { font-size: 36px; }
+  .skin-picker { gap: 12px; }
+  #skinPreviewBox { width: 180px; height: 160px; }
+  #skinPreviewBox canvas { width: 160px; height: 140px; }
+  #skinTitle { font-size: 22px; }
+  #skinName { font-size: 15px; margin-bottom: 12px; }
+  .skin-arrow { font-size: 36px; padding: 8px; }
+  .skin-close-x { font-size: 36px; padding: 10px; top: 12px; right: 16px; }
+  .skin-back { padding: 12px 36px; min-height: 44px; }
+  #achList { max-width: 90vw !important; }
 }
 
 </style>
@@ -254,7 +293,7 @@ h2 {
   <div id="menuCoins" style="margin-top:6px;color:#ffd600;font-size:14px;text-shadow:0 0 8px #ffd600;">&#9733; 0 coins</div>
 
   <div style="margin-top:12px;display:flex;gap:12px;align-items:center;">
-    <button style="background:rgba(255,50,50,0.12);border:1px solid #c33;border-radius:6px;color:#f66;font-size:11px;padding:4px 10px;cursor:pointer;font-family:'Arial',sans-serif;" onclick="if(confirm('Reset ALL progress? Coins, skins, achievements, trails, and high score will be lost.')){localStorage.removeItem('geoflyer-coins');localStorage.removeItem('geoflyer-unlocked');localStorage.removeItem('geoflyer-achievements');localStorage.removeItem('geoflyer-unlocked-trails');localStorage.removeItem('geoflyer-skin');localStorage.removeItem('geoflyer-trail');localStorage.removeItem('geoflyer-streak-skin');localStorage.removeItem('geoflyer-streak-count');localStorage.removeItem('endless-high');location.reload();}">Reset Progress</button>
+    <button style="background:rgba(255,50,50,0.12);border:1px solid #c33;border-radius:6px;color:#f66;font-size:12px;padding:8px 16px;cursor:pointer;font-family:'Arial',sans-serif;" onclick="if(confirm('Reset ALL progress? Coins, skins, achievements, trails, and high score will be lost.')){localStorage.removeItem('geoflyer-coins');localStorage.removeItem('geoflyer-unlocked');localStorage.removeItem('geoflyer-achievements');localStorage.removeItem('geoflyer-unlocked-trails');localStorage.removeItem('geoflyer-skin');localStorage.removeItem('geoflyer-trail');localStorage.removeItem('geoflyer-streak-skin');localStorage.removeItem('geoflyer-streak-count');localStorage.removeItem('endless-high');location.reload();}">Reset Progress</button>
   </div>
 </div>
 
