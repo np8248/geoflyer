@@ -1257,6 +1257,9 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.save(); ctx.translate(S/6, -S/6); ctx.rotate(-0.3);
         ctx.beginPath(); ctx.ellipse(0, 0, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
+        // Little line mouth
+        ctx.strokeStyle = '#4A3228'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(S/3, S/12, 4, 0.1, Math.PI * 0.8); ctx.stroke();
         // Rosy cheek
         ctx.fillStyle = 'rgba(210,140,140,0.45)';
         ctx.beginPath(); ctx.arc(S/5, -S/14, 6, 0, Math.PI * 2); ctx.fill();
@@ -1832,6 +1835,9 @@ document.addEventListener('DOMContentLoaded', function() {
         bctx.save(); bctx.translate(S/10, -S/8); bctx.rotate(-0.3);
         bctx.beginPath(); bctx.ellipse(0, 0, 1.5, 1, 0, 0, Math.PI * 2); bctx.fill();
         bctx.restore();
+        // Little line mouth
+        bctx.strokeStyle = '#4A3228'; bctx.lineWidth = 0.8;
+        bctx.beginPath(); bctx.arc(S/6, S/6, 2, 0.1, Math.PI * 0.8); bctx.stroke();
         // Rosy cheek
         bctx.fillStyle = 'rgba(210,140,140,0.4)';
         bctx.beginPath(); bctx.arc(S/6, S/12, 2.5, 0, Math.PI * 2); bctx.fill();

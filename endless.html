@@ -2896,6 +2896,9 @@ function drawShipSkin11() {
   X.save(); X.translate(w/6, -h/6); X.rotate(-0.3);
   X.beginPath(); X.ellipse(0, 0, 2.5, 1.8, 0, 0, Math.PI * 2); X.fill();
   X.restore();
+  // Little line mouth
+  X.strokeStyle = '#4A3228'; X.lineWidth = 1.2;
+  X.beginPath(); X.arc(w/3, h/12, 3, 0.1, Math.PI * 0.8); X.stroke();
   // Rosy cheek
   X.fillStyle = 'rgba(210,140,140,0.45)';
   X.beginPath(); X.arc(w/5, -h/14, 4, 0, Math.PI * 2); X.fill();
@@ -2950,6 +2953,9 @@ function drawCubeSkin11() {
   X.save(); X.translate(h/5, -h/6); X.rotate(0.3);
   X.beginPath(); X.ellipse(0, 0, 3, 2, 0, 0, Math.PI * 2); X.fill();
   X.restore();
+  // Little line mouth
+  X.strokeStyle = '#4A3228'; X.lineWidth = 1.2;
+  X.beginPath(); X.arc(0, h/5, 4, 0.2, Math.PI * 0.8); X.stroke();
   // Rosy cheeks
   X.fillStyle = 'rgba(210,140,140,0.4)';
   X.beginPath(); X.arc(-h/4, -h/12, 4, 0, Math.PI * 2); X.fill();
