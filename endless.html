@@ -1855,87 +1855,168 @@ function drawCubeSkin3() {
 function drawShipSkin4() {
   const h = PSIZ, w = PSIZ;
   const t = Date.now() * 0.008;
-  // Ember particle trail
+  const flap = Math.sin(t * 1.2) * 3;
+  // Ember/flame trail
   if (trailStyle === 0) {
-  for (let i = 0; i < 10; i++) {
-    const fx = -w/2 - 8 - i * 6 + Math.sin(t * 1.5 + i * 1.7) * 4;
-    const fy = (Math.sin(t * 2 + i * 1.1)) * 8;
-    const sz = 4 - i * 0.3;
-    X.globalAlpha = 0.7 - i * 0.06;
-    X.fillStyle = i < 4 ? '#ff4400' : (i < 7 ? '#ff8800' : '#ffcc00');
-    X.beginPath(); X.arc(fx, fy, Math.max(1, sz), 0, Math.PI * 2); X.fill();
+  for (let i = 0; i < 12; i++) {
+    const fx = -w/2 - 4 - i * 5;
+    const fy = Math.sin(t * 2 + i * 1.3) * 4;
+    const sz = 4.5 - i * 0.35;
+    X.globalAlpha = 0.7 - i * 0.055;
+    X.fillStyle = i < 3 ? '#ff2200' : (i < 6 ? '#ff6600' : (i < 9 ? '#ffaa00' : '#ffdd44'));
+    X.beginPath(); X.arc(fx, fy, Math.max(1, sz), 0, Math.PI*2); X.fill();
   }
   X.globalAlpha = 1;
   }
-  // Body - orange/red gradient bird shape
-  const grd = X.createLinearGradient(-w/2, -h/2, w/2, h/2);
-  grd.addColorStop(0, '#ff6600'); grd.addColorStop(1, '#cc2200');
-  X.fillStyle = grd;
+  // Tail feathers (behind body)
+  X.fillStyle = '#cc3300';
   X.beginPath();
-  X.moveTo(w/2 + 5, 0);
-  X.lineTo(w/6, -h/2 + 2);
-  X.lineTo(-w/2, -h/3);
-  X.lineTo(-w/2, h/3);
-  X.lineTo(w/6, h/2 - 2);
+  X.moveTo(-w/4, -2);
+  X.quadraticCurveTo(-w/2 - 4, -5, -w/2 - 10, -h/6);
+  X.quadraticCurveTo(-w/2 - 2, -1, -w/4, 0);
   X.closePath(); X.fill();
-  // Golden feather wing extensions
-  X.fillStyle = '#ffaa00';
-  X.beginPath(); X.moveTo(w/6, -h/2 + 2); X.lineTo(-w/6, -h/4); X.lineTo(-w/2 - 6, -h/2 + 2); X.closePath(); X.fill();
-  X.beginPath(); X.moveTo(w/6, h/2 - 2); X.lineTo(-w/6, h/4); X.lineTo(-w/2 - 6, h/2 - 2); X.closePath(); X.fill();
-  // Animated fire flicker on wings
-  if (trailStyle === 0) {
-  for (let i = 0; i < 3; i++) {
-    const flx = -w/4 - i * 5 + Math.sin(t * 3 + i) * 2;
-    const fly = (-h/2 + 5 + Math.sin(t * 4 + i * 2) * 3);
-    X.globalAlpha = 0.5 - i * 0.12;
-    X.fillStyle = '#ffcc00';
-    X.beginPath(); X.arc(flx, fly, 2.5 - i * 0.4, 0, Math.PI * 2); X.fill();
-    X.beginPath(); X.arc(flx, -fly, 2.5 - i * 0.4, 0, Math.PI * 2); X.fill();
-  }
+  X.beginPath();
+  X.moveTo(-w/4, 2);
+  X.quadraticCurveTo(-w/2 - 4, 5, -w/2 - 10, h/6);
+  X.quadraticCurveTo(-w/2 - 2, 1, -w/4, 0);
+  X.closePath(); X.fill();
+  X.fillStyle = '#ff6600';
+  X.beginPath();
+  X.moveTo(-w/4, 0);
+  X.quadraticCurveTo(-w/2 - 6, 0, -w/2 - 12, 0);
+  X.quadraticCurveTo(-w/2 - 6, -2, -w/4, -1);
+  X.closePath(); X.fill();
+  // Wings (spread, curved, with flap)
+  const wgrd = X.createLinearGradient(0, -h/2, 0, 0);
+  wgrd.addColorStop(0, '#ffaa00'); wgrd.addColorStop(1, '#ee5500');
+  X.fillStyle = wgrd;
+  // Top wing
+  X.beginPath();
+  X.moveTo(w/6, -2);
+  X.quadraticCurveTo(w/8, -h/4 - flap, -w/6, -h/2 - 2 - flap);
+  X.lineTo(-w/3, -h/2 + 2 - flap);
+  X.quadraticCurveTo(-w/6, -h/4 - flap, -w/4, -3);
+  X.closePath(); X.fill();
+  // Bottom wing
+  X.beginPath();
+  X.moveTo(w/6, 2);
+  X.quadraticCurveTo(w/8, h/4 + flap, -w/6, h/2 + 2 + flap);
+  X.lineTo(-w/3, h/2 - 2 + flap);
+  X.quadraticCurveTo(-w/6, h/4 + flap, -w/4, 3);
+  X.closePath(); X.fill();
+  // Fiery wing tips
+  X.fillStyle = '#ffdd44';
+  X.globalAlpha = 0.7;
+  X.beginPath(); X.arc(-w/4, -h/2 + 1 - flap, 3, 0, Math.PI*2); X.fill();
+  X.beginPath(); X.arc(-w/4, h/2 - 1 + flap, 3, 0, Math.PI*2); X.fill();
   X.globalAlpha = 1;
-  }
-  // Amber cockpit eye
-  X.save(); X.shadowColor = '#ffaa00'; X.shadowBlur = 8;
-  X.fillStyle = '#ffcc44';
-  X.beginPath(); X.ellipse(w/6, 0, 5, 3.5, 0, 0, Math.PI * 2); X.fill();
+  // Body (rounded bird torso)
+  const bgrd = X.createLinearGradient(-w/4, -h/6, w/4, h/6);
+  bgrd.addColorStop(0, '#ff5500'); bgrd.addColorStop(0.5, '#ee3300'); bgrd.addColorStop(1, '#cc2200');
+  X.fillStyle = bgrd;
+  X.beginPath();
+  X.ellipse(0, 0, w/3 + 2, h/6 + 1, 0, 0, Math.PI*2);
+  X.fill();
+  // Head (round, slightly forward)
+  X.fillStyle = '#ee4400';
+  X.beginPath(); X.arc(w/4 + 2, 0, h/7, 0, Math.PI*2); X.fill();
+  // Crest/crown on head
+  X.fillStyle = '#ffcc00';
+  X.beginPath();
+  X.moveTo(w/4, -h/7 + 1);
+  X.lineTo(w/4 - 3, -h/7 - 5);
+  X.lineTo(w/4 + 1, -h/7 - 1);
+  X.lineTo(w/4 + 3, -h/7 - 6);
+  X.lineTo(w/4 + 5, -h/7);
+  X.closePath(); X.fill();
+  // Beak
+  X.fillStyle = '#ff8800';
+  X.beginPath();
+  X.moveTo(w/4 + h/7, 0);
+  X.lineTo(w/2 + 6, -1);
+  X.lineTo(w/2 + 6, 2);
+  X.quadraticCurveTo(w/2 + 4, 3, w/4 + h/7, 2);
+  X.closePath(); X.fill();
+  // Eye
+  X.fillStyle = '#ffee44';
+  X.save(); X.shadowColor = '#ffaa00'; X.shadowBlur = 6;
+  X.beginPath(); X.arc(w/4 + 4, -1, 2.5, 0, Math.PI*2); X.fill();
   X.restore();
-  X.fillStyle = '#fff';
-  X.beginPath(); X.ellipse(w/6 + 1, -1, 2, 1.2, 0, 0, Math.PI * 2); X.fill();
+  X.fillStyle = '#111';
+  X.beginPath(); X.arc(w/4 + 4.5, -1, 1, 0, Math.PI*2); X.fill();
 }
 
 function drawCubeSkin4() {
   const h = PSIZ;
   const t = Date.now() * 0.008;
+  const flap = Math.sin(t * 1.2) * 2;
   // Ember trail
   if (trailStyle === 0) {
   for (let i = 1; i <= 5; i++) {
     X.globalAlpha = 0.4 - i * 0.07;
-    X.fillStyle = i < 3 ? '#ff6600' : '#ffcc00';
+    X.fillStyle = i < 3 ? '#ff4400' : '#ffaa00';
     const fy = Math.sin(t * 2 + i) * 3;
-    X.beginPath(); X.arc(-h/2 - i * 7, fy, 3 - i * 0.4, 0, Math.PI * 2); X.fill();
+    X.beginPath(); X.arc(-h/2 - i * 7, fy, 3 - i * 0.4, 0, Math.PI*2); X.fill();
   }
   X.globalAlpha = 1;
   }
+  // Wings extending above and below cube
+  const wgrd = X.createLinearGradient(0, -h/2 - 8, 0, 0);
+  wgrd.addColorStop(0, '#ffaa00'); wgrd.addColorStop(1, '#ee5500');
+  X.fillStyle = wgrd;
+  // Top wing
+  X.beginPath();
+  X.moveTo(h/4, -h/2);
+  X.quadraticCurveTo(0, -h/2 - 6 - flap, -h/4, -h/2 - 10 - flap);
+  X.lineTo(-h/3, -h/2 - 6 - flap);
+  X.quadraticCurveTo(-h/6, -h/2 - 2 - flap, -h/4, -h/2);
+  X.closePath(); X.fill();
+  // Bottom wing
+  X.beginPath();
+  X.moveTo(h/4, h/2);
+  X.quadraticCurveTo(0, h/2 + 6 + flap, -h/4, h/2 + 10 + flap);
+  X.lineTo(-h/3, h/2 + 6 + flap);
+  X.quadraticCurveTo(-h/6, h/2 + 2 + flap, -h/4, h/2);
+  X.closePath(); X.fill();
+  // Fiery wing tips
+  X.fillStyle = '#ffdd44'; X.globalAlpha = 0.7;
+  X.beginPath(); X.arc(-h/4, -h/2 - 9 - flap, 2.5, 0, Math.PI*2); X.fill();
+  X.beginPath(); X.arc(-h/4, h/2 + 9 + flap, 2.5, 0, Math.PI*2); X.fill();
+  X.globalAlpha = 1;
+  // Tail feathers behind cube
+  X.fillStyle = '#cc3300';
+  X.beginPath();
+  X.moveTo(-h/2, -h/6);
+  X.quadraticCurveTo(-h/2 - 6, -h/5, -h/2 - 8, -h/4);
+  X.quadraticCurveTo(-h/2 - 3, -h/8, -h/2, 0);
+  X.closePath(); X.fill();
+  X.beginPath();
+  X.moveTo(-h/2, h/6);
+  X.quadraticCurveTo(-h/2 - 6, h/5, -h/2 - 8, h/4);
+  X.quadraticCurveTo(-h/2 - 3, h/8, -h/2, 0);
+  X.closePath(); X.fill();
   // Body gradient
   const grd = X.createLinearGradient(-h/2, -h/2, h/2, h/2);
-  grd.addColorStop(0, '#ff6600'); grd.addColorStop(1, '#cc2200');
+  grd.addColorStop(0, '#ff5500'); grd.addColorStop(0.5, '#ee3300'); grd.addColorStop(1, '#cc2200');
   X.fillStyle = grd; X.fillRect(-h/2, -h/2, h, h);
-  // Flame wisps on edges
-  if (trailStyle === 0) {
-  for (let i = 0; i < 4; i++) {
-    const ey = -h/2 + i * (h/3);
-    const ex = h/2 + Math.sin(t * 3 + i * 1.5) * 2;
-    X.globalAlpha = 0.3;
-    X.fillStyle = '#ffcc00';
-    X.beginPath(); X.arc(ex, ey, 2, 0, Math.PI * 2); X.fill();
-  }
-  X.globalAlpha = 1;
-  }
+  // Crest on top edge
+  X.fillStyle = '#ffcc00';
+  X.beginPath();
+  X.moveTo(h/6, -h/2);
+  X.lineTo(h/6 - 2, -h/2 - 4);
+  X.lineTo(h/6 + 2, -h/2 - 1);
+  X.lineTo(h/6 + 4, -h/2 - 5);
+  X.lineTo(h/6 + 6, -h/2);
+  X.closePath(); X.fill();
   // Golden border
   X.strokeStyle = '#ffaa00'; X.lineWidth = 2; X.strokeRect(-h/2, -h/2, h, h);
-  // Amber eye
-  X.fillStyle = '#ffcc44'; X.fillRect(-3, -5, 10, 8);
-  X.fillStyle = '#fff'; X.fillRect(0, -3, 5, 5);
+  // Amber eye with glow
+  X.save(); X.shadowColor = '#ffaa00'; X.shadowBlur = 6;
+  X.fillStyle = '#ffee44';
+  X.beginPath(); X.arc(2, -1, 4, 0, Math.PI*2); X.fill();
+  X.restore();
+  X.fillStyle = '#111';
+  X.beginPath(); X.arc(3, -1, 1.5, 0, Math.PI*2); X.fill();
 }
 
 // --- Skin 5: Pirate Ship ---
@@ -2162,67 +2243,141 @@ function drawCubeSkin6() {
 function drawShipSkin7() {
   const h = PSIZ, w = PSIZ;
   const t = Date.now() * 0.006;
+  const flap = Math.sin(t * 1.5) * 3;
   // White wisp trail
   if (trailStyle === 0) {
   for (let i = 0; i < 8; i++) {
     const fx = -w/2 - 6 - i * 7 + Math.sin(t * 1.3 + i * 1.5) * 3;
-    const fy = Math.sin(t * 1.6 + i * 1.2) * 6;
-    const sz = 3.5 - i * 0.35;
-    X.globalAlpha = 0.45 - i * 0.05;
+    const fy = Math.sin(t * 1.6 + i * 1.2) * 5;
+    const sz = 3 - i * 0.3;
+    X.globalAlpha = 0.35 - i * 0.04;
     X.fillStyle = '#ddeeff';
-    X.beginPath(); X.arc(fx, fy, Math.max(0.5, sz), 0, Math.PI * 2); X.fill();
+    X.beginPath(); X.arc(fx, fy, Math.max(0.5, sz), 0, Math.PI*2); X.fill();
   }
   X.globalAlpha = 1;
   }
-  // White feathered body
-  X.fillStyle = '#eef4f8';
+  // Tail feathers (short, behind body)
+  X.fillStyle = '#99aabb';
   X.beginPath();
-  X.moveTo(w/2 + 4, 0);
-  X.lineTo(w/6, -h/2 + 3);
-  X.lineTo(-w/2, -h/3);
-  X.lineTo(-w/2, h/3);
-  X.lineTo(w/6, h/2 - 3);
+  X.moveTo(-w/4, -1);
+  X.lineTo(-w/2 - 6, -h/8);
+  X.lineTo(-w/2 - 8, 0);
+  X.lineTo(-w/2 - 6, h/8);
+  X.lineTo(-w/4, 1);
   X.closePath(); X.fill();
-  // Gray wing tips
-  X.fillStyle = '#8899aa';
-  X.beginPath(); X.moveTo(w/6, -h/2 + 3); X.lineTo(-w/6, -h/4); X.lineTo(-w/2 - 6, -h/2 + 4); X.closePath(); X.fill();
-  X.beginPath(); X.moveTo(w/6, h/2 - 3); X.lineTo(-w/6, h/4); X.lineTo(-w/2 - 6, h/2 - 4); X.closePath(); X.fill();
-  // Orange beak at nose
-  X.fillStyle = '#ee8833';
-  X.beginPath(); X.moveTo(w/2 + 4, 0); X.lineTo(w/3, -3); X.lineTo(w/3, 3); X.closePath(); X.fill();
-  // Dark eye
+  // Wings (long, curved, with animated flap)
+  // Top wing
+  X.fillStyle = '#dde8f0';
+  X.beginPath();
+  X.moveTo(w/8, -2);
+  X.quadraticCurveTo(w/10, -h/4 - flap, -w/4, -h/2 - 3 - flap);
+  X.lineTo(-w/3 - 2, -h/2 + 2 - flap);
+  X.quadraticCurveTo(-w/5, -h/5 - flap, -w/4, -2);
+  X.closePath(); X.fill();
+  // Bottom wing
+  X.beginPath();
+  X.moveTo(w/8, 2);
+  X.quadraticCurveTo(w/10, h/4 + flap, -w/4, h/2 + 3 + flap);
+  X.lineTo(-w/3 - 2, h/2 - 2 + flap);
+  X.quadraticCurveTo(-w/5, h/5 + flap, -w/4, 2);
+  X.closePath(); X.fill();
+  // Gray/dark wing tips
+  X.fillStyle = '#556677';
+  X.beginPath();
+  X.moveTo(-w/4 - 2, -h/2 - 1 - flap);
+  X.lineTo(-w/3 - 4, -h/2 + 1 - flap);
+  X.lineTo(-w/3, -h/2 + 5 - flap);
+  X.closePath(); X.fill();
+  X.beginPath();
+  X.moveTo(-w/4 - 2, h/2 + 1 + flap);
+  X.lineTo(-w/3 - 4, h/2 - 1 + flap);
+  X.lineTo(-w/3, h/2 - 5 + flap);
+  X.closePath(); X.fill();
+  // Body (oval bird torso)
+  X.fillStyle = '#f0f4f8';
+  X.beginPath();
+  X.ellipse(0, 0, w/3, h/7, 0, 0, Math.PI*2);
+  X.fill();
+  // Light belly highlight
+  X.fillStyle = 'rgba(255,255,255,0.4)';
+  X.beginPath();
+  X.ellipse(0, 2, w/4, h/10, 0, 0, Math.PI*2);
+  X.fill();
+  // Head (round)
+  X.fillStyle = '#f0f4f8';
+  X.beginPath(); X.arc(w/4 + 2, -1, h/7, 0, Math.PI*2); X.fill();
+  // Beak (yellow-orange, slightly curved down)
+  X.fillStyle = '#eeaa33';
+  X.beginPath();
+  X.moveTo(w/4 + h/7, -1);
+  X.lineTo(w/2 + 7, -1);
+  X.lineTo(w/2 + 5, 2);
+  X.quadraticCurveTo(w/2 + 3, 3, w/4 + h/7, 1);
+  X.closePath(); X.fill();
+  // Eye
   X.fillStyle = '#222';
-  X.beginPath(); X.arc(w/5, -2, 2.5, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(w/4 + 4, -2, 2, 0, Math.PI*2); X.fill();
   X.fillStyle = '#fff';
-  X.beginPath(); X.arc(w/5 + 0.8, -2.5, 0.8, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(w/4 + 4.5, -2.5, 0.7, 0, Math.PI*2); X.fill();
 }
 
 function drawCubeSkin7() {
   const h = PSIZ;
   const t = Date.now() * 0.006;
+  const flap = Math.sin(t * 1.5) * 2;
   // White wisp trail
   if (trailStyle === 0) {
   for (let i = 1; i <= 5; i++) {
     const fy = Math.sin(t * 1.4 + i * 1.6) * 4;
     X.globalAlpha = 0.35 - i * 0.06;
     X.fillStyle = '#ddeeff';
-    X.beginPath(); X.arc(-h/2 - i * 7, fy, 2.5 - i * 0.3, 0, Math.PI * 2); X.fill();
+    X.beginPath(); X.arc(-h/2 - i * 7, fy, 2.5 - i * 0.3, 0, Math.PI*2); X.fill();
   }
   X.globalAlpha = 1;
   }
+  // Wings extending above and below cube
+  X.fillStyle = '#dde8f0';
+  // Top wing
+  X.beginPath();
+  X.moveTo(h/4, -h/2);
+  X.quadraticCurveTo(0, -h/2 - 5 - flap, -h/4, -h/2 - 9 - flap);
+  X.lineTo(-h/3, -h/2 - 5 - flap);
+  X.quadraticCurveTo(-h/6, -h/2 - 1, -h/4, -h/2);
+  X.closePath(); X.fill();
+  // Bottom wing
+  X.beginPath();
+  X.moveTo(h/4, h/2);
+  X.quadraticCurveTo(0, h/2 + 5 + flap, -h/4, h/2 + 9 + flap);
+  X.lineTo(-h/3, h/2 + 5 + flap);
+  X.quadraticCurveTo(-h/6, h/2 + 1, -h/4, h/2);
+  X.closePath(); X.fill();
+  // Dark wing tips
+  X.fillStyle = '#556677';
+  X.beginPath(); X.arc(-h/4, -h/2 - 8 - flap, 2, 0, Math.PI*2); X.fill();
+  X.beginPath(); X.arc(-h/4, h/2 + 8 + flap, 2, 0, Math.PI*2); X.fill();
+  // Tail feathers behind
+  X.fillStyle = '#99aabb';
+  X.beginPath();
+  X.moveTo(-h/2, -h/8); X.lineTo(-h/2 - 5, -h/6); X.lineTo(-h/2 - 6, 0);
+  X.lineTo(-h/2 - 5, h/6); X.lineTo(-h/2, h/8);
+  X.closePath(); X.fill();
   // White body
-  X.fillStyle = '#eef4f8'; X.fillRect(-h/2, -h/2, h, h);
-  // Gray inner
-  X.fillStyle = '#ccd8e0'; X.fillRect(-h/2 + 3, -h/2 + 3, h - 6, h - 6);
-  // Wing accents on top/bottom
-  X.fillStyle = '#8899aa';
-  X.beginPath(); X.moveTo(-h/2 + 4, -h/2); X.lineTo(h/4, -h/2 - 5); X.lineTo(h/4, -h/2); X.closePath(); X.fill();
-  X.beginPath(); X.moveTo(-h/2 + 4, h/2); X.lineTo(h/4, h/2 + 5); X.lineTo(h/4, h/2); X.closePath(); X.fill();
+  X.fillStyle = '#f0f4f8'; X.fillRect(-h/2, -h/2, h, h);
+  // Belly highlight
+  X.fillStyle = 'rgba(255,255,255,0.3)';
+  X.fillRect(-h/4, -h/4, h/2, h/2);
   // Border
   X.strokeStyle = '#99aabb'; X.lineWidth = 2; X.strokeRect(-h/2, -h/2, h, h);
-  // Orange eye
-  X.fillStyle = '#ee8833'; X.fillRect(-3, -5, 10, 8);
-  X.fillStyle = '#fff'; X.fillRect(0, -3, 5, 5);
+  // Beak stub on right edge
+  X.fillStyle = '#eeaa33';
+  X.beginPath();
+  X.moveTo(h/2, -2); X.lineTo(h/2 + 5, 0); X.lineTo(h/2, 3);
+  X.closePath(); X.fill();
+  // Eye
+  X.fillStyle = '#222';
+  X.beginPath(); X.arc(h/6, -2, 2.5, 0, Math.PI*2); X.fill();
+  X.fillStyle = '#fff';
+  X.beginPath(); X.arc(h/6 + 0.7, -2.5, 0.8, 0, Math.PI*2); X.fill();
 }
 
 // --- Skin 8: Dolphin ---
