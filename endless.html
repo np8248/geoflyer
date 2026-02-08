@@ -2680,15 +2680,34 @@ function drawPlayer() {
         }
         X.restore();
       }
-    } else if (trailStyle === 5) { // Snow particles
-      const tc = TRAIL_COLORS[5];
+    } else if (trailStyle === 5) { // Snow — snowflake crystals
       for (let i = 0; i < 10; i++) {
-        const fx = -h/2 - 6 - i * 6 + Math.sin(t+i*1.2)*3;
-        const fy = Math.sin(t*1.5+i*0.9)*6;
-        const sz = 5 - i*0.4;
-        X.globalAlpha = 0.7 - i*0.06;
-        X.fillStyle = tc[i % tc.length];
-        X.beginPath(); X.arc(fx, fy, Math.max(1,sz), 0, Math.PI*2); X.fill();
+        const seed = i * 73.7;
+        const age = (t * 0.6 + seed) % 3.5;
+        const fx = -h/2 - 6 - age * 14;
+        const fy = Math.sin(seed) * 4 + age * age * 1.5;
+        const sz = 4 - age * 0.6;
+        const spin = t * 1.5 + seed;
+        X.globalAlpha = Math.max(0, 0.75 - age * 0.18);
+        X.strokeStyle = i % 3 === 0 ? '#ffffff' : (i % 3 === 1 ? '#cceeff' : '#aaddff');
+        X.lineWidth = 0.8;
+        X.save();
+        X.translate(fx, fy);
+        X.rotate(spin);
+        // Draw 6-armed snowflake
+        for (let a = 0; a < 6; a++) {
+          const ang = a * Math.PI / 3;
+          const cx = Math.cos(ang), sy = Math.sin(ang);
+          X.beginPath(); X.moveTo(0, 0); X.lineTo(cx * sz, sy * sz); X.stroke();
+          // Small branches
+          X.beginPath(); X.moveTo(cx * sz * 0.5, sy * sz * 0.5);
+          X.lineTo(cx * sz * 0.5 + Math.cos(ang + 0.8) * sz * 0.3, sy * sz * 0.5 + Math.sin(ang + 0.8) * sz * 0.3);
+          X.stroke();
+          X.beginPath(); X.moveTo(cx * sz * 0.5, sy * sz * 0.5);
+          X.lineTo(cx * sz * 0.5 + Math.cos(ang - 0.8) * sz * 0.3, sy * sz * 0.5 + Math.sin(ang - 0.8) * sz * 0.3);
+          X.stroke();
+        }
+        X.restore();
       }
     } else if (trailStyle === 6) { // Skin Echo — spits out tumbling mini copies like candy
       for (let i = 0; i < 10; i++) {
