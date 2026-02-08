@@ -1225,28 +1225,33 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.lineTo(-S/6, -S/8);
         ctx.lineTo(S/4, -S/8);
         ctx.closePath(); ctx.fill();
-        // Snout bump at front
-        ctx.fillStyle = '#A67B3D';
+        // Big blocky snout at front
+        ctx.fillStyle = '#9E7620';
         ctx.beginPath();
-        ctx.arc(S/2 + 8, 4, S/5, 0, Math.PI * 2);
-        ctx.fill();
-        // Pink nose dot
-        ctx.fillStyle = '#ff8fab';
-        ctx.beginPath();
-        ctx.arc(S/2 + 14, 4, 4, 0, Math.PI * 2);
-        ctx.fill();
-        // Ears: two semicircle bumps on top-rear
-        ctx.fillStyle = '#8B6914';
-        ctx.beginPath(); ctx.arc(-S/5, -S/3 - 5, 6, Math.PI, 0); ctx.fill();
-        ctx.beginPath(); ctx.arc(-S/5 + 16, -S/3 - 5, 6, Math.PI, 0); ctx.fill();
+        ctx.moveTo(S/3, -S/6);
+        ctx.quadraticCurveTo(S/2 + 12, -S/6, S/2 + 12, 0);
+        ctx.quadraticCurveTo(S/2 + 12, S/5, S/3, S/5);
+        ctx.lineTo(S/3, -S/6);
+        ctx.closePath(); ctx.fill();
+        // Wide flat nose with two nostrils
+        ctx.fillStyle = '#4a3a1a';
+        ctx.beginPath(); ctx.ellipse(S/2 + 8, -S/12, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(S/2 + 8, S/12, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
+        // Small round ear on top (side view)
+        ctx.fillStyle = '#7a5a10';
+        ctx.beginPath(); ctx.arc(S/8, -S/3 - 4, 5, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#d4a574';
-        ctx.beginPath(); ctx.arc(-S/5, -S/3 - 5, 4, Math.PI, 0); ctx.fill();
-        ctx.beginPath(); ctx.arc(-S/5 + 16, -S/3 - 5, 4, Math.PI, 0); ctx.fill();
-        // Eye: dark circle with white highlight
+        ctx.beginPath(); ctx.arc(S/8, -S/3 - 4, 3, 0, Math.PI * 2); ctx.fill();
+        // Small beady eye set high
         ctx.fillStyle = '#1a1a1a';
-        ctx.beginPath(); ctx.arc(S/5, -S/8, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(S/4, -S/5, 4.5, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#fff';
-        ctx.beginPath(); ctx.arc(S/5 + 2, -S/8 - 2, 2.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(S/4 + 1.5, -S/5 - 1.5, 1.8, 0, Math.PI * 2); ctx.fill();
+        // Whiskers
+        ctx.strokeStyle = '#5a4a2a'; ctx.lineWidth = 0.8;
+        ctx.beginPath(); ctx.moveTo(S/2 + 4, 0); ctx.lineTo(S/2 + 16, -S/6); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(S/2 + 4, 3); ctx.lineTo(S/2 + 17, 3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(S/2 + 4, 6); ctx.lineTo(S/2 + 16, S/5); ctx.stroke();
         // Two small leg stubs at bottom
         ctx.fillStyle = '#6b5210';
         ctx.fillRect(-S/6, S/3 - 2, 10, 8);
@@ -1789,7 +1794,7 @@ document.addEventListener('DOMContentLoaded', function() {
         break;
       }
       case 11: { // Capybara mini
-        // Mini brown rounded shape
+        // Mini brown rounded body
         bctx.fillStyle = '#8B6914';
         bctx.beginPath();
         bctx.moveTo(S/3, 0);
@@ -1798,12 +1803,21 @@ document.addEventListener('DOMContentLoaded', function() {
         bctx.quadraticCurveTo(-S/3, S/4, 0, S/4);
         bctx.quadraticCurveTo(S/3, S/4, S/3, 0);
         bctx.closePath(); bctx.fill();
-        // Ear bumps
-        bctx.beginPath(); bctx.arc(-S/6, -S/4 - 2, 3, Math.PI, 0); bctx.fill();
-        bctx.beginPath(); bctx.arc(S/6, -S/4 - 2, 3, Math.PI, 0); bctx.fill();
-        // Dot eye
+        // Blocky snout
+        bctx.fillStyle = '#9E7620';
+        bctx.beginPath();
+        bctx.moveTo(S/6, -S/10);
+        bctx.quadraticCurveTo(S/3 + 2, -S/10, S/3 + 2, 0);
+        bctx.quadraticCurveTo(S/3 + 2, S/10, S/6, S/10);
+        bctx.closePath(); bctx.fill();
+        // Small round ear
+        bctx.fillStyle = '#7a5a10';
+        bctx.beginPath(); bctx.arc(0, -S/4 - 1, 2.5, 0, Math.PI * 2); bctx.fill();
+        // Beady eye
         bctx.fillStyle = '#1a1a1a';
-        bctx.beginPath(); bctx.arc(S/8, -S/10, 2, 0, Math.PI * 2); bctx.fill();
+        bctx.beginPath(); bctx.arc(S/10, -S/8, 1.5, 0, Math.PI * 2); bctx.fill();
+        // Nostril
+        bctx.beginPath(); bctx.arc(S/4 + 1, 0, 1, 0, Math.PI * 2); bctx.fill();
         break;
       }
     }

@@ -2863,29 +2863,33 @@ function drawShipSkin11() {
   X.lineTo(-w/6, -h/8);
   X.lineTo(w/4, -h/8);
   X.closePath(); X.fill();
-  // Snout bump at front
-  X.fillStyle = '#A67B3D';
+  // Big blocky snout at front
+  X.fillStyle = '#9E7620';
   X.beginPath();
-  X.arc(w/2 + 4, 2, h/5, 0, Math.PI * 2);
-  X.fill();
-  // Pink nose dot
-  X.fillStyle = '#ff8fab';
-  X.beginPath();
-  X.arc(w/2 + 7, 2, 2.5, 0, Math.PI * 2);
-  X.fill();
-  // Ears: two semicircle bumps on top-rear
-  X.fillStyle = '#8B6914';
-  X.beginPath(); X.arc(-w/5, -h/3 - 3, 4, Math.PI, 0); X.fill();
-  X.beginPath(); X.arc(-w/5 + 10, -h/3 - 3, 4, Math.PI, 0); X.fill();
-  // Inner ears
+  X.moveTo(w/3, -h/6);
+  X.quadraticCurveTo(w/2 + 8, -h/6, w/2 + 8, 0);
+  X.quadraticCurveTo(w/2 + 8, h/5, w/3, h/5);
+  X.lineTo(w/3, -h/6);
+  X.closePath(); X.fill();
+  // Wide flat nose with two nostrils
+  X.fillStyle = '#4a3a1a';
+  X.beginPath(); X.ellipse(w/2 + 5, -h/12, 2, 1.5, 0, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.ellipse(w/2 + 5, h/12, 2, 1.5, 0, 0, Math.PI * 2); X.fill();
+  // Small round ear on top (side view — one visible)
+  X.fillStyle = '#7a5a10';
+  X.beginPath(); X.arc(w/8, -h/3 - 2, 3.5, 0, Math.PI * 2); X.fill();
   X.fillStyle = '#d4a574';
-  X.beginPath(); X.arc(-w/5, -h/3 - 3, 2.5, Math.PI, 0); X.fill();
-  X.beginPath(); X.arc(-w/5 + 10, -h/3 - 3, 2.5, Math.PI, 0); X.fill();
-  // Eye: dark circle with white highlight (side view, one eye)
+  X.beginPath(); X.arc(w/8, -h/3 - 2, 2, 0, Math.PI * 2); X.fill();
+  // Small beady eye set high on head
   X.fillStyle = '#1a1a1a';
-  X.beginPath(); X.arc(w/5, -h/8, 4, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(w/4, -h/5, 3, 0, Math.PI * 2); X.fill();
   X.fillStyle = '#fff';
-  X.beginPath(); X.arc(w/5 + 1.5, -h/8 - 1.5, 1.5, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(w/4 + 1, -h/5 - 1, 1.2, 0, Math.PI * 2); X.fill();
+  // Whiskers
+  X.strokeStyle = '#5a4a2a'; X.lineWidth = 0.7;
+  X.beginPath(); X.moveTo(w/2 + 2, 0); X.lineTo(w/2 + 10, -h/6); X.stroke();
+  X.beginPath(); X.moveTo(w/2 + 2, 2); X.lineTo(w/2 + 11, 2); X.stroke();
+  X.beginPath(); X.moveTo(w/2 + 2, 4); X.lineTo(w/2 + 10, h/5); X.stroke();
   // Two small leg stubs at bottom
   X.fillStyle = '#6b5210';
   X.fillRect(-w/6, h/3 - 1, 6, 5);
@@ -2908,23 +2912,38 @@ function drawCubeSkin11() {
   // Slightly lighter inner
   X.fillStyle = '#A67B3D';
   X.fillRect(-h/2 + 3, -h/2 + 3, h - 6, h/2 - 3);
-  // Ear bumps poking above top edge
-  X.fillStyle = '#8B6914';
-  X.beginPath(); X.arc(-h/5, -h/2, 5, Math.PI, 0); X.fill();
-  X.beginPath(); X.arc(h/5, -h/2, 5, Math.PI, 0); X.fill();
+  // Small round ears poking above top edge
+  X.fillStyle = '#7a5a10';
+  X.beginPath(); X.arc(-h/4, -h/2 - 1, 4, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(h/4, -h/2 - 1, 4, 0, Math.PI * 2); X.fill();
   X.fillStyle = '#d4a574';
-  X.beginPath(); X.arc(-h/5, -h/2, 3, Math.PI, 0); X.fill();
-  X.beginPath(); X.arc(h/5, -h/2, 3, Math.PI, 0); X.fill();
-  // Two round dark eyes with white highlights
+  X.beginPath(); X.arc(-h/4, -h/2 - 1, 2.5, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(h/4, -h/2 - 1, 2.5, 0, Math.PI * 2); X.fill();
+  // Small beady eyes set high
   X.fillStyle = '#1a1a1a';
-  X.beginPath(); X.arc(-h/5, -h/8, 5, 0, Math.PI * 2); X.fill();
-  X.beginPath(); X.arc(h/5, -h/8, 5, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(-h/5, -h/5, 3, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(h/5, -h/5, 3, 0, Math.PI * 2); X.fill();
   X.fillStyle = '#fff';
-  X.beginPath(); X.arc(-h/5 + 1.5, -h/8 - 1.5, 2, 0, Math.PI * 2); X.fill();
-  X.beginPath(); X.arc(h/5 + 1.5, -h/8 - 1.5, 2, 0, Math.PI * 2); X.fill();
-  // Pink oval nose
-  X.fillStyle = '#ff8fab';
-  X.beginPath(); X.ellipse(0, h/6, 4, 3, 0, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(-h/5 + 1, -h/5 - 1, 1.2, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.arc(h/5 + 1, -h/5 - 1, 1.2, 0, Math.PI * 2); X.fill();
+  // Big blocky snout/muzzle area
+  X.fillStyle = '#9E7620';
+  X.beginPath();
+  X.moveTo(-h/4, h/12);
+  X.quadraticCurveTo(-h/4, h/3, 0, h/3);
+  X.quadraticCurveTo(h/4, h/3, h/4, h/12);
+  X.lineTo(-h/4, h/12);
+  X.closePath(); X.fill();
+  // Wide nose with two nostrils
+  X.fillStyle = '#4a3a1a';
+  X.beginPath(); X.ellipse(-h/10, h/6, 2, 1.5, 0, 0, Math.PI * 2); X.fill();
+  X.beginPath(); X.ellipse(h/10, h/6, 2, 1.5, 0, 0, Math.PI * 2); X.fill();
+  // Whiskers
+  X.strokeStyle = '#5a4a2a'; X.lineWidth = 0.7;
+  X.beginPath(); X.moveTo(-h/6, h/5); X.lineTo(-h/2 + 2, h/8); X.stroke();
+  X.beginPath(); X.moveTo(-h/6, h/4); X.lineTo(-h/2 + 2, h/3); X.stroke();
+  X.beginPath(); X.moveTo(h/6, h/5); X.lineTo(h/2 - 2, h/8); X.stroke();
+  X.beginPath(); X.moveTo(h/6, h/4); X.lineTo(h/2 - 2, h/3); X.stroke();
   // White "C" below nose
   X.fillStyle = '#fff';
   X.font = 'bold ' + Math.floor(h * 0.3) + 'px Arial';
